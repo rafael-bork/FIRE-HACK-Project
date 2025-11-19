@@ -1,33 +1,62 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FireROS | Rate of Spread Prediction</title>
-    
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/phosphor-icons"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #F3F4F6; }
-        .glass-panel { background: white; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid #E5E7EB; }
-        .input-field { transition: all 0.2s; }
-        .input-field:focus { border-color: #F97316; ring: 2px solid #F97316; outline: none; }
-        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F3F4F6;
+        }
+
+        .glass-panel {
+            background: white;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            border: 1px solid #E5E7EB;
+        }
+
+        .input-field {
+            transition: all 0.2s;
+        }
+
+        .input-field:focus {
+            border-color: #F97316;
+            ring: 2px solid #F97316;
+            outline: none;
+        }
+
         /* Map specific overrides */
-        .leaflet-container { font-family: 'Inter', sans-serif; }
-        
+        .leaflet-container {
+            font-family: 'Inter', sans-serif;
+        }
+
         /* Loading Animation */
         .loader {
             border-top-color: #F97316;
             -webkit-animation: spinner 1.5s linear infinite;
             animation: spinner 1.5s linear infinite;
         }
-        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        @keyframes spinner {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
     </style>
 </head>
+
 <body class="text-slate-700 h-screen flex flex-col overflow-hidden">
 
     <header class="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-8 shrink-0">
@@ -36,31 +65,47 @@
                 <i class="ph-fire-fill text-xl"></i>
             </div>
             <div>
-                <h1 class="font-semibold text-slate-800 text-lg tracking-tight">FireROS <span class="text-slate-400 font-light">Predictive Model</span></h1>
+                <h1 class="font-semibold text-slate-800 text-lg tracking-tight">FireROS <span
+                        class="text-slate-400 font-light">Predictive Model</span></h1>
+            </div>
+            <div class="ml-4 pl-4 border-l border-slate-200">
+                <select id="model-selector" onchange="switchModel(this.value)"
+                    class="bg-slate-50 border border-slate-200 text-slate-700 text-xs font-medium rounded-lg focus:ring-orange-500 focus:border-orange-500 block w-full p-2">
+                    <option value="complex" selected>Complex Model</option>
+                    <option value="linear">Linear Model</option>
+                </select>
             </div>
         </div>
         <div class="flex items-center gap-4">
-            <span class="text-xs font-medium text-green-600 bg-green-50 px-3 py-1 rounded-full border border-green-100">● System Operational</span>
-            <div class="h-8 w-8 bg-slate-200 rounded-full flex items-center justify-center text-slate-500 text-sm">JD</div>
+            <span
+                class="text-xs font-medium text-green-600 bg-green-50 px-3 py-1 rounded-full border border-green-100">●
+                System Operational</span>
+            <div class="h-8 w-8 bg-slate-200 rounded-full flex items-center justify-center text-slate-500 text-sm">JD
+            </div>
         </div>
     </header>
 
     <main class="flex-1 grid grid-cols-12 gap-6 p-6 overflow-hidden">
-        
+
         <div class="col-span-4 flex flex-col gap-6 h-full overflow-hidden">
-            
+
             <div class="glass-panel rounded-xl p-1 flex gap-1 shrink-0">
-                <button onclick="switchTab('manual')" id="tab-manual" class="flex-1 py-2 text-sm font-medium rounded-lg bg-slate-100 text-slate-900 transition-colors">Manual Input</button>
-                <button onclick="switchTab('csv')" id="tab-csv" class="flex-1 py-2 text-sm font-medium rounded-lg text-slate-500 hover:text-slate-700 transition-colors">Upload CSV</button>
+                <button onclick="switchTab('manual')" id="tab-manual"
+                    class="flex-1 py-2 text-sm font-medium rounded-lg bg-slate-100 text-slate-900 transition-colors">Manual
+                    Input</button>
+                <button onclick="switchTab('csv')" id="tab-csv"
+                    class="flex-1 py-2 text-sm font-medium rounded-lg text-slate-500 hover:text-slate-700 transition-colors">Upload
+                    CSV</button>
             </div>
 
             <div id="view-manual" class="glass-panel rounded-xl flex-1 overflow-y-auto p-6 custom-scrollbar">
                 <h3 class="text-sm font-semibold text-slate-900 mb-4 uppercase tracking-wider">Model Variables (20)</h3>
                 <div class="grid grid-cols-2 gap-4" id="manual-inputs-container">
-                    </div>
+                </div>
             </div>
 
-            <div id="view-csv" class="hidden glass-panel rounded-xl flex-1 flex flex-col items-center justify-center p-8 border-2 border-dashed border-slate-300 hover:border-orange-400 transition-colors cursor-pointer group">
+            <div id="view-csv"
+                class="hidden glass-panel rounded-xl flex-1 flex flex-col items-center justify-center p-8 border-2 border-dashed border-slate-300 hover:border-orange-400 transition-colors cursor-pointer group">
                 <div class="bg-slate-50 p-4 rounded-full mb-4 group-hover:scale-110 transition-transform">
                     <i class="ph-upload-simple text-3xl text-slate-400 group-hover:text-orange-500"></i>
                 </div>
@@ -69,16 +114,17 @@
                 <input type="file" class="hidden" id="csvInput" accept=".csv">
             </div>
 
-            <button onclick="runPrediction()" class="shrink-0 bg-slate-900 hover:bg-orange-600 text-white h-14 rounded-xl font-medium text-lg shadow-lg shadow-orange-500/20 transition-all flex items-center justify-center gap-2">
+            <button onclick="runPrediction()"
+                class="shrink-0 bg-slate-900 hover:bg-orange-600 text-white h-14 rounded-xl font-medium text-lg shadow-lg shadow-orange-500/20 transition-all flex items-center justify-center gap-2">
                 <i class="ph-trend-up"></i> Run Model Prediction
             </button>
         </div>
 
         <div class="col-span-8 flex flex-col gap-6 h-full">
-            
+
             <div class="glass-panel rounded-xl flex-1 relative overflow-hidden group">
                 <div id="map" class="w-full h-full z-0"></div>
-                
+
                 <div class="absolute top-4 right-4 z-[400] bg-white/90 backdrop-blur rounded-lg shadow-sm p-2">
                     <div class="text-xs font-semibold text-slate-500 mb-1 px-2">Coordinates</div>
                     <div class="font-mono text-sm text-slate-800 px-2" id="coord-display">Select location...</div>
@@ -86,7 +132,7 @@
             </div>
 
             <div class="h-40 grid grid-cols-3 gap-6 shrink-0">
-                
+
                 <div class="glass-panel rounded-xl p-5 relative overflow-hidden">
                     <div class="flex justify-between items-start mb-2">
                         <h4 class="text-xs font-bold text-slate-400 uppercase">Topography</h4>
@@ -107,19 +153,27 @@
                     </div>
                 </div>
 
-                <div class="bg-slate-800 rounded-xl p-5 text-white relative overflow-hidden flex flex-col justify-center items-center">
+                <div
+                    class="bg-slate-800 rounded-xl p-4 text-white relative overflow-hidden flex flex-col justify-center items-center gap-3">
                     <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 to-red-600"></div>
-                    <h4 class="text-slate-400 text-xs font-medium uppercase tracking-widest mb-1">Predicted Rate of Spread</h4>
-                    <div class="flex items-baseline gap-1">
-                        <span id="ros-output" class="text-4xl font-bold text-white">--</span>
-                        <span class="text-sm text-slate-400">m/min</span>
+
+                    <div class="text-center">
+                        <h4 class="text-xs font-bold text-slate-400 uppercase">Rate of Spread</h4>
+                        <div class="flex items-baseline justify-center gap-1">
+                            <span id="ros-output" class="text-3xl font-bold text-white tracking-tight">--</span>
+                            <span class="text-xs text-slate-400 font-medium">m/min</span>
+                        </div>
                     </div>
 
-                    <!-- dar fix nisto -->
-                    <h4 class="text-slate-400 text-xs font-medium uppercase tracking-widest mb-1">Expected Error %</h4>
-                    <div class="flex items-baseline gap-1">
-                        <span id="ros-output" class="text-4xl font-bold text-white">--</span>
-                        <span class="text-sm text-slate-400">%</span>
+                    <div class="w-24 h-px bg-slate-700/50"></div>
+
+                    <div class="text-center">
+                        <h4 class="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">Expected Error
+                        </h4>
+                        <div class="flex items-baseline justify-center gap-1">
+                            <span id="error-output" class="text-lg font-semibold text-slate-300">--</span>
+                            <span class="text-xs text-slate-500">%</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -127,30 +181,51 @@
     </main>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    
+
     <script>
         // --- 1. GENERATE 20 INPUT FIELDS ---
+        // --- 1. GENERATE INPUT FIELDS BASED ON MODEL ---
         const inputContainer = document.getElementById('manual-inputs-container');
-        const variableNames = [
-            "1h Fuel Moisture", "10h Fuel Moisture", "100h Fuel Moisture", "Live Herb Moisture", 
-            "Live Woody Moisture", "Wind Speed (midflame)", "Wind Direction", "Slope (%)", 
-            "Aspect", "Fuel Bed Depth", "Fuel Load", "SAV Ratio", 
-            "Heat Content", "Moisture Damping", "Mineral Damping", "Packing Ratio", 
+
+        const complexVariables = [
+            "1h Fuel Moisture", "10h Fuel Moisture", "100h Fuel Moisture", "Live Herb Moisture",
+            "Live Woody Moisture", "Wind Speed (midflame)", "Wind Direction", "Slope (%)",
+            "Aspect", "Fuel Bed Depth", "Fuel Load", "SAV Ratio",
+            "Heat Content", "Moisture Damping", "Mineral Damping", "Packing Ratio",
             "Bulk Density", "Emissivity", "Cloud Cover", "Solar Radiation"
         ];
 
-        variableNames.forEach((name, index) => {
-            const div = document.createElement('div');
-            div.innerHTML = `
-                <label class="block text-xs font-medium text-slate-500 mb-1">${name}</label>
-                <input type="number" step="0.01" class="input-field w-full bg-slate-50 border border-slate-200 rounded-md px-3 py-2 text-sm text-slate-700 placeholder-slate-300" placeholder="0.00">
-            `;
-            inputContainer.appendChild(div);
-        });
+        const linearVariables = [
+            "Wind Speed (midflame)", "Wind Direction", "Slope (%)", "1h Fuel Moisture", "Fuel Load"
+        ];
+
+        function renderInputs(modelType) {
+            const title = document.querySelector('#view-manual h3');
+            inputContainer.innerHTML = '';
+
+            const variables = modelType === 'complex' ? complexVariables : linearVariables;
+            title.innerText = `Model Variables (${variables.length})`;
+
+            variables.forEach(name => {
+                const div = document.createElement('div');
+                div.innerHTML = `
+                    <label class="block text-xs font-medium text-slate-500 mb-1">${name}</label>
+                    <input type="number" step="0.01" class="input-field w-full bg-slate-50 border border-slate-200 rounded-md px-3 py-2 text-sm text-slate-700 placeholder-slate-300" placeholder="0.00">
+                `;
+                inputContainer.appendChild(div);
+            });
+        }
+
+        function switchModel(modelType) {
+            renderInputs(modelType);
+        }
+
+        // Initialize with Complex Model
+        renderInputs('complex');
 
         // --- 2. MAP INITIALIZATION ---
-        const map = L.map('map').setView([39.4871, -8.0801], 7); 
-        
+        const map = L.map('map').setView([39.4871, -8.0801], 7);
+
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
             subdomains: 'abcd',
@@ -159,7 +234,7 @@
 
         let currentMarker = null;
 
-        map.on('click', function(e) {
+        map.on('click', function (e) {
             const lat = e.latlng.lat;
             const lng = e.latlng.lng;
 
@@ -169,7 +244,7 @@
 
             // Update UI
             document.getElementById('coord-display').innerText = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-            
+
             // Trigger Placeholder Data Fetch
             simulateDataFetch(lat, lng);
         });
@@ -225,17 +300,23 @@
 
         // --- 5. PREDICTION LOGIC (Connect ML Model here) ---
         function runPrediction() {
-            const outputEl = document.getElementById('ros-output');
-            outputEl.innerText = "...";
-            
+            const rosOutput = document.getElementById('ros-output');
+            const errorOutput = document.getElementById('error-output');
+
+            rosOutput.innerText = "...";
+            errorOutput.innerText = "...";
+
             // Visual Loading
             setTimeout(() => {
                 // PLACEHOLDER: This is where you send the JSON payload to your Python/Flask/FastAPI backend
                 // Example: const prediction = await fetch('/api/predict', { ... });
-                
+
                 // Random fake value for demo
                 const randomROS = (Math.random() * 15 + 5).toFixed(2);
-                outputEl.innerText = randomROS;
+                const randomError = (Math.random() * 5 + 1).toFixed(1);
+
+                rosOutput.innerText = randomROS;
+                errorOutput.innerText = `±${randomError}`;
             }, 1000);
         }
 
@@ -245,4 +326,5 @@
         });
     </script>
 </body>
+
 </html>
