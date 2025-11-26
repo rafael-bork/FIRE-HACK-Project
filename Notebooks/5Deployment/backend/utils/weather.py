@@ -1,6 +1,6 @@
 import numpy as np
 from datetime import datetime
-from backend.utils.era5_fetch import fetch_era5_single_levels, fetch_era5_pressure_levels, fetch_fire_weather_index, CDS_AVAILABLE, cds_client
+from backend.utils.era5_fetch import fetch_era5_single_levels, fetch_era5_pressure_levels, fetch_fire_weather_index, CDS_AVAILABLE
 from backend.utils.era5_extract import extract_value_at_point
 
 def fetch_weather_data(lat, lon, datetime_str=None):
