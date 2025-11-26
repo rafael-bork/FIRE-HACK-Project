@@ -14,4 +14,14 @@ def get_raster_value(raster_name):
             return jsonify({'success': False, 'error': f'Raster "{raster_name}" not found'}), 404
 
         value = get_raster_value_at_point(raster_path, lon, lat)
-        return jsonify({'success': True, 'value': value, 'raster
+        return jsonify({
+            'success': True,
+            'value': value,
+            'raster': raster_name,
+            'coordinates': {'lat': lat, 'lon': lon}
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 400
