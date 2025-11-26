@@ -10,22 +10,29 @@ import numpy as np
 import pandas as pd
 import rasterio
 from rasterio.windows import from_bounds
-import openmeteo_requests
-import requests_cache
-from retry_requests import retry
 from pathlib import Path
 import json
 from datetime import datetime, timedelta
 import os
+import xarray as xr
 
-# Try to import CDS API (optional)
+# Import CDS API (required)
 try:
     import cdsapi
     CDS_AVAILABLE = True
+    cds_client = cdsapi.Client()
+    print("✅ CDS API client initialized")
 except ImportError:
     CDS_AVAILABLE = False
-    print("⚠️  cdsapi not installed. CDS API features disabled.")
+    print("❌ ERROR: cdsapi not installed!")
+    print("   This application requires CDS API for historical weather data.")
     print("   Install with: pip install cdsapi")
+    print("   Configure: https://cds.climate.copernicus.eu/api-how-to")
+except Exception as e:
+    CDS_AVAILABLE = False
+    print(f"❌ ERROR: CDS API client initialization failed: {e}")
+    print("   Make sure ~/.cdsapirc is configured with your credentials")
+    print("   Get API key at: https://cds.climate.copernicus.eu/")
 
 app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)  # Enable CORS for frontend requests
@@ -37,9 +44,6 @@ MODEL_DIR = Path('../../Data/Models')
 RASTER_DIR = Path('../../Data/web_rasters')
 ERA5_CACHE_DIR = Path('../../Data/Interim/Meteorological_data/ERA5_cache')
 ERA5_CACHE_DIR.mkdir(parents=True, exist_ok=True)
-
-# Weather API Selection
-WEATHER_API = os.getenv('WEATHER_API', 'openmeteo')  # 'openmeteo' or 'cds'
 
 # Load trained models
 MODELS = {
@@ -61,21 +65,6 @@ LINEAR_VARIABLES = [
     "wind_speed_midflame", "wind_direction", "slope",
     "1h_fuel_moisture", "fuel_load"
 ]
-
-# Setup OpenMeteo API with caching
-cache_session = requests_cache.CachedSession('.cache', expire_after=3600)
-retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
-openmeteo = openmeteo_requests.Client(session=retry_session)
-
-# Setup CDS API client (if available)
-if CDS_AVAILABLE:
-    try:
-        cds_client = cdsapi.Client()
-        print("✅ CDS API client initialized")
-    except Exception as e:
-        print(f"⚠️  CDS API client initialization failed: {e}")
-        print("   Make sure ~/.cdsapirc is configured")
-        CDS_AVAILABLE = False
 
 # ==================== HELPER FUNCTIONS ====================
 
@@ -112,60 +101,9 @@ def get_raster_value_at_point(raster_path, lon, lat):
         return None
 
 
-def fetch_weather_data(lat, lon):
+def fetch_weather_data(lat, lon, datetime_str=None):
     """
-    Fetch real-time weather data from Open-Meteo API
-
-    Parameters:
-    -----------
-    lat : float
-        Latitude
-    lon : float
-        Longitude
-
-    Returns:
-    --------
-    dict : Weather variables
-    """
-    url = "https://api.open-meteo.com/v1/forecast"
-
-    params = {
-        "latitude": lat,
-        "longitude": lon,
-        "current": [
-            "temperature_2m",
-            "relative_humidity_2m",
-            "wind_speed_10m",
-            "wind_direction_10m",
-            "cloud_cover",
-            "shortwave_radiation"
-        ],
-        "timezone": "auto"
-    }
-
-    try:
-        responses = openmeteo.weather_api(url, params=params)
-        response = responses[0]
-
-        current = response.Current()
-
-        return {
-            "temperature": current.Variables(0).Value(),
-            "humidity": current.Variables(1).Value(),
-            "wind_speed": current.Variables(2).Value(),
-            "wind_direction": current.Variables(3).Value(),
-            "cloud_cover": current.Variables(4).Value(),
-            "solar_radiation": current.Variables(5).Value(),
-        }
-
-    except Exception as e:
-        print(f"Error fetching weather data: {e}")
-        return None
-
-
-def fetch_weather_data_cds(lat, lon, datetime_str=None):
-    """
-    Fetch weather data from CDS API (ERA5 reanalysis)
+    Fetch historical weather data from CDS API (ERA5 reanalysis)
 
     Parameters:
     -----------
@@ -174,7 +112,7 @@ def fetch_weather_data_cds(lat, lon, datetime_str=None):
     lon : float
         Longitude
     datetime_str : str, optional
-        Date/time in format 'YYYY-MM-DD HH:MM' (default: current hour)
+        Date/time in format 'YYYY-MM-DD HH:MM' (required for historical queries)
 
     Returns:
     --------
@@ -182,27 +120,26 @@ def fetch_weather_data_cds(lat, lon, datetime_str=None):
 
     Note:
     -----
-    CDS API provides historical reanalysis data. For current conditions,
-    use Open-Meteo instead. ERA5 data has ~5 days delay.
+    ERA5 provides historical reanalysis data with ~5 day delay.
+    This application is designed for historical fire analysis, not real-time prediction.
     """
     if not CDS_AVAILABLE:
-        print("CDS API not available")
+        print("❌ CDS API not available")
         return None
 
     try:
-        import xarray as xr
+        # Parse datetime (required)
+        if not datetime_str:
+            raise ValueError("datetime parameter is required (format: 'YYYY-MM-DD HH:MM')")
 
-        # Parse datetime or use current
-        if datetime_str:
-            target_dt = datetime.strptime(datetime_str, '%Y-%m-%d %H:%M')
-        else:
-            target_dt = datetime.utcnow().replace(minute=0, second=0, microsecond=0)
+        target_dt = datetime.strptime(datetime_str, '%Y-%m-%d %H:%M')
 
-        # ERA5 has ~5 day delay, check if date is too recent
-        if (datetime.utcnow() - target_dt).days < 5:
-            print(f"⚠️  ERA5 data not yet available for {target_dt}")
-            print("   Using Open-Meteo instead for recent dates")
-            return fetch_weather_data(lat, lon)
+        # ERA5 has ~5 day delay, warn if date is too recent
+        days_ago = (datetime.utcnow() - target_dt).days
+        if days_ago < 5:
+            print(f"⚠️  ERA5 data may not yet be available for {target_dt}")
+            print(f"   Requested date is only {days_ago} days ago. ERA5 typically has a 5-day delay.")
+            # Continue anyway - CDS API will queue the request or fail gracefully
 
         # Create cache filename
         cache_file = ERA5_CACHE_DIR / f"ERA5_{target_dt.strftime('%Y%m%d_%H')}_{lat:.2f}_{lon:.2f}.nc"
@@ -351,18 +288,18 @@ def index():
 @app.route('/api/location-data', methods=['POST'])
 def get_location_data():
     """
-    Fetch topography and meteorology data for a clicked location
+    Fetch topography and historical meteorology data for a location
 
     Request JSON:
     {
         "lat": 39.5,
         "lon": -8.0,
-        "api": "openmeteo",  # optional: "openmeteo" or "cds"
-        "datetime": "2023-08-15 14:00"  # optional: for historical CDS queries
+        "datetime": "2023-08-15 14:00"  # REQUIRED: Historical date/time for ERA5 data
     }
 
     Response JSON:
     {
+        "success": true,
         "topography": {"elevation": 1240, "slope": 12, "aspect": 180},
         "meteorology": {"temperature": 25, "humidity": 32, "wind_speed": 15, ...}
     }
@@ -371,25 +308,30 @@ def get_location_data():
         data = request.get_json()
         lat = float(data['lat'])
         lon = float(data['lon'])
-        api_source = data.get('api', WEATHER_API)  # Use configured default
         datetime_str = data.get('datetime', None)
+
+        if not datetime_str:
+            return jsonify({
+                'success': False,
+                'error': 'datetime parameter is required (format: "YYYY-MM-DD HH:MM")'
+            }), 400
 
         # Fetch topography data
         topo_data = fetch_topography_data(lat, lon)
 
-        # Fetch weather data based on API source
-        if api_source == 'cds' and CDS_AVAILABLE:
-            weather_data = fetch_weather_data_cds(lat, lon, datetime_str)
-        else:
-            if api_source == 'cds' and not CDS_AVAILABLE:
-                print("⚠️  CDS API requested but not available, falling back to Open-Meteo")
-            weather_data = fetch_weather_data(lat, lon)
+        # Fetch historical weather data from CDS API
+        weather_data = fetch_weather_data(lat, lon, datetime_str)
+
+        if not weather_data:
+            return jsonify({
+                'success': False,
+                'error': 'Failed to fetch weather data. Check CDS API configuration.'
+            }), 500
 
         return jsonify({
             'success': True,
             'topography': topo_data,
-            'meteorology': weather_data,
-            'api_used': 'cds' if (api_source == 'cds' and CDS_AVAILABLE and weather_data and weather_data.get('source') == 'ERA5') else 'openmeteo'
+            'meteorology': weather_data
         })
 
     except Exception as e:
@@ -493,15 +435,13 @@ def api_status():
     return jsonify({
         'success': True,
         'models': list(MODELS.keys()),
-        'weather_apis': {
-            'openmeteo': True,
-            'cds': CDS_AVAILABLE
-        },
-        'default_weather_api': WEATHER_API,
+        'cds_api_available': CDS_AVAILABLE,
         'features': {
             'raster_data': RASTER_DIR.exists(),
-            'historical_weather': CDS_AVAILABLE
-        }
+            'historical_weather': CDS_AVAILABLE,
+            'model_prediction': len(MODELS) > 0
+        },
+        'note': 'This application requires CDS API for historical weather data analysis'
     })
 
 
@@ -545,23 +485,41 @@ def get_raster_value(raster_name):
 # ==================== RUN SERVER ====================
 
 if __name__ == '__main__':
-    print("🔥 Starting Fire ROS Prediction API Server...")
+    print("🔥 Fire ROS Historical Analysis API Server")
+    print("="*60)
+    print(f"\n📊 Configuration:")
     print(f"   Models loaded: {list(MODELS.keys())}")
     print(f"   Raster directory: {RASTER_DIR}")
-    print(f"   Weather APIs:")
-    print(f"      - Open-Meteo: ✅ Available (real-time)")
-    print(f"      - CDS API (ERA5): {'✅ Available (historical)' if CDS_AVAILABLE else '❌ Not available'}")
-    print(f"   Default weather API: {WEATHER_API}")
-    print(f"   Server running on http://localhost:5000")
-    print(f"   API status: http://localhost:5000/api/status")
+    print(f"   ERA5 cache directory: {ERA5_CACHE_DIR}")
 
+    print(f"\n🌦️  Weather Data Source:")
     if CDS_AVAILABLE:
-        print(f"\n   💡 CDS API enabled for historical weather data")
-        print(f"      To use: Add 'api': 'cds' and 'datetime': 'YYYY-MM-DD HH:MM' to requests")
+        print(f"   ✅ CDS API (ERA5 Historical Reanalysis) - READY")
+        print(f"      Data range: 1940 to present (~5 day delay)")
     else:
-        print(f"\n   ℹ️  To enable CDS API:")
-        print(f"      1. pip install cdsapi")
-        print(f"      2. Configure ~/.cdsapirc with your CDS credentials")
-        print(f"      3. Get free API key at: https://cds.climate.copernicus.eu/")
+        print(f"   ❌ CDS API NOT CONFIGURED")
+        print(f"      This application requires CDS API for historical weather analysis.")
+        print(f"\n   📝 Setup Instructions:")
+        print(f"      1. Register at: https://cds.climate.copernicus.eu/")
+        print(f"      2. Get your API key from: https://cds.climate.copernicus.eu/api-how-to")
+        print(f"      3. Install: pip install cdsapi")
+        print(f"      4. Configure ~/.cdsapirc with your UID and API key")
+        print(f"      5. Restart this server")
+        print(f"\n   ⚠️  Server will run but weather data requests will fail!")
+
+    print(f"\n🌐 Server Info:")
+    print(f"   URL: http://localhost:5000")
+    print(f"   API Status: http://localhost:5000/api/status")
+    print(f"   Mode: Historical Fire Analysis (not real-time prediction)")
+
+    print(f"\n📍 Usage:")
+    print(f'   POST /api/location-data with {{"lat": 39.5, "lon": -8.0, "datetime": "2023-08-15 14:00"}}')
+    print(f"   Datetime parameter is REQUIRED for historical ERA5 queries")
+
+    print("\n" + "="*60)
+
+    if not CDS_AVAILABLE:
+        print("\n⚠️  WARNING: Starting server without CDS API configuration!")
+        print("   Configure CDS API to enable weather data functionality.\n")
 
     app.run(debug=True, host='0.0.0.0', port=5000)
