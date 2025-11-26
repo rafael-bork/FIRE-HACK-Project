@@ -249,8 +249,10 @@
             simulateDataFetch(lat, lng);
         });
 
-        // --- 3. DATA FETCH SIMULATION (Connect your backend here) ---
-        function simulateDataFetch(lat, lng) {
+        // --- 3. REAL DATA FETCH (Connected to Flask Backend) ---
+        const API_BASE_URL = 'http://localhost:5000/api';  // Change to your deployment URL
+
+        async function simulateDataFetch(lat, lng) {
             const topoDiv = document.getElementById('topo-data');
             const metDiv = document.getElementById('met-data');
 
@@ -258,24 +260,46 @@
             topoDiv.innerHTML = '<div class="loader ease-linear rounded-full border-2 border-t-2 border-gray-200 h-5 w-5"></div>';
             metDiv.innerHTML = '<div class="loader ease-linear rounded-full border-2 border-t-2 border-gray-200 h-5 w-5"></div>';
 
-            // Simulate API Delay
-            setTimeout(() => {
-                // PLACEHOLDER: Connect to USGS or Google Elevation API here
-                topoDiv.innerHTML = `
-                    <div class="grid grid-cols-2 gap-2 mt-1">
-                        <div><div class="text-xs text-slate-400">Elev</div><div class="font-mono text-sm font-semibold">1,240m</div></div>
-                        <div><div class="text-xs text-slate-400">Slope</div><div class="font-mono text-sm font-semibold">12%</div></div>
-                    </div>
-                `;
+            try {
+                // Fetch data from Flask backend
+                const response = await fetch(`${API_BASE_URL}/location-data`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ lat, lon: lng })
+                });
 
-                // PLACEHOLDER: Connect to OpenWeatherMap or NOAA here
-                metDiv.innerHTML = `
-                     <div class="grid grid-cols-2 gap-2 mt-1">
-                        <div><div class="text-xs text-slate-400">Wind</div><div class="font-mono text-sm font-semibold">15 km/h</div></div>
-                        <div><div class="text-xs text-slate-400">Humid</div><div class="font-mono text-sm font-semibold">32%</div></div>
-                    </div>
-                `;
-            }, 800);
+                const data = await response.json();
+
+                if (data.success) {
+                    const topo = data.topography;
+                    const met = data.meteorology;
+
+                    // Update Topography Panel
+                    topoDiv.innerHTML = `
+                        <div class="grid grid-cols-2 gap-2 mt-1">
+                            <div><div class="text-xs text-slate-400">Elev</div><div class="font-mono text-sm font-semibold">${topo.elevation ? Math.round(topo.elevation) + 'm' : 'N/A'}</div></div>
+                            <div><div class="text-xs text-slate-400">Slope</div><div class="font-mono text-sm font-semibold">${topo.slope ? topo.slope.toFixed(1) + '%' : 'N/A'}</div></div>
+                        </div>
+                    `;
+
+                    // Update Meteorology Panel
+                    metDiv.innerHTML = `
+                         <div class="grid grid-cols-2 gap-2 mt-1">
+                            <div><div class="text-xs text-slate-400">Wind</div><div class="font-mono text-sm font-semibold">${met.wind_speed ? met.wind_speed.toFixed(1) + ' km/h' : 'N/A'}</div></div>
+                            <div><div class="text-xs text-slate-400">Humid</div><div class="font-mono text-sm font-semibold">${met.humidity ? Math.round(met.humidity) + '%' : 'N/A'}</div></div>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(data.error || 'Failed to fetch location data');
+                }
+
+            } catch (error) {
+                console.error('Error fetching location data:', error);
+                topoDiv.innerHTML = '<span class="text-red-500 text-xs">Error loading data</span>';
+                metDiv.innerHTML = '<span class="text-red-500 text-xs">Error loading data</span>';
+            }
         }
 
         // --- 4. TAB SWITCHING LOGIC ---
@@ -298,26 +322,61 @@
             }
         }
 
-        // --- 5. PREDICTION LOGIC (Connect ML Model here) ---
-        function runPrediction() {
+        // --- 5. PREDICTION LOGIC (Connected to Flask Backend) ---
+        async function runPrediction() {
             const rosOutput = document.getElementById('ros-output');
             const errorOutput = document.getElementById('error-output');
 
             rosOutput.innerText = "...";
             errorOutput.innerText = "...";
 
-            // Visual Loading
-            setTimeout(() => {
-                // PLACEHOLDER: This is where you send the JSON payload to your Python/Flask/FastAPI backend
-                // Example: const prediction = await fetch('/api/predict', { ... });
+            try {
+                // Get selected model type
+                const modelType = document.getElementById('model-selector').value;
 
-                // Random fake value for demo
-                const randomROS = (Math.random() * 15 + 5).toFixed(2);
-                const randomError = (Math.random() * 5 + 1).toFixed(1);
+                // Collect input values
+                const inputs = document.querySelectorAll('#manual-inputs-container input');
+                const variables = {};
 
-                rosOutput.innerText = randomROS;
-                errorOutput.innerText = `±${randomError}`;
-            }, 1000);
+                // Get variable names based on model type
+                const variableNames = modelType === 'complex' ? complexVariables : linearVariables;
+
+                // Build variables object with snake_case keys for API
+                inputs.forEach((input, index) => {
+                    const varName = variableNames[index]
+                        .toLowerCase()
+                        .replace(/ /g, '_')
+                        .replace(/[()%]/g, '');
+                    variables[varName] = parseFloat(input.value) || 0;
+                });
+
+                // Make API call
+                const response = await fetch(`${API_BASE_URL}/predict`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        model: modelType,
+                        variables: variables
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    rosOutput.innerText = data.prediction.toFixed(2);
+                    errorOutput.innerText = `±${data.error_estimate.toFixed(1)}`;
+                } else {
+                    throw new Error(data.error || 'Prediction failed');
+                }
+
+            } catch (error) {
+                console.error('Error running prediction:', error);
+                rosOutput.innerText = 'ERR';
+                errorOutput.innerText = '--';
+                alert('Error running prediction: ' + error.message);
+            }
         }
 
         // CSV Click Trigger
