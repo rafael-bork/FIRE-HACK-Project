@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FireROS | Historical Fire Analysis</title>
+    <title>FireROS | Grid-Based Fire Prediction</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -33,12 +33,10 @@
             outline: none;
         }
 
-        /* Map specific overrides */
         .leaflet-container {
             font-family: 'Inter', sans-serif;
         }
 
-        /* Loading Animation */
         .loader {
             border-top-color: #F97316;
             -webkit-animation: spinner 1.5s linear infinite;
@@ -66,10 +64,10 @@
             </div>
             <div>
                 <h1 class="font-semibold text-slate-800 text-lg tracking-tight">FireROS <span
-                        class="text-slate-400 font-light">Historical Analysis</span></h1>
+                        class="text-slate-400 font-light">Grid Prediction</span></h1>
             </div>
             <div class="ml-4 pl-4 border-l border-slate-200">
-                <select id="model-selector" onchange="switchModel(this.value)"
+                <select id="model-selector"
                     class="bg-slate-50 border border-slate-200 text-slate-700 text-xs font-medium rounded-lg focus:ring-orange-500 focus:border-orange-500 block w-full p-2">
                     <option value="complex" selected>Complex Model</option>
                     <option value="linear">Linear Model</option>
@@ -91,11 +89,19 @@
 
             <!-- DateTime Selector -->
             <div class="glass-panel rounded-xl p-4 shrink-0">
-                <label class="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">Historical Fire Event Date/Time</label>
+                <label class="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">Fire Event Date/Time</label>
                 <input type="datetime-local" id="datetime-input"
                     class="input-field w-full bg-slate-50 border border-slate-200 rounded-md px-3 py-2 text-sm text-slate-700"
                     required>
                 <p class="text-xs text-slate-400 mt-2">⚠️ Required for ERA5 weather data</p>
+            </div>
+
+            <!-- Optional f_start Input -->
+            <div class="glass-panel rounded-xl p-4 shrink-0">
+                <label class="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">Fire Start Parameter (optional)</label>
+                <input type="number" id="f-start-input" value="0" step="0.1"
+                    class="input-field w-full bg-slate-50 border border-slate-200 rounded-md px-3 py-2 text-sm text-slate-700">
+                <p class="text-xs text-slate-400 mt-2">Default: 0 (leave as-is unless you need to adjust)</p>
             </div>
 
             <!-- Instructions -->
@@ -107,40 +113,36 @@
                         <div class="bg-orange-100 text-orange-600 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shrink-0">1</div>
                         <div>
                             <p class="text-sm font-medium text-slate-800">Select Fire Event Date & Time</p>
-                            <p class="text-xs text-slate-500 mt-1">Enter the historical fire event date (2015-2025)</p>
+                            <p class="text-xs text-slate-500 mt-1">Enter the fire event date and time (2015-2025)</p>
                         </div>
                     </div>
 
                     <div class="flex items-start gap-3">
                         <div class="bg-orange-100 text-orange-600 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shrink-0">2</div>
                         <div>
-                            <p class="text-sm font-medium text-slate-800">Click Fire Location on Map</p>
-                            <p class="text-xs text-slate-500 mt-1">System will automatically fetch:</p>
-                            <ul class="text-xs text-slate-500 mt-1 ml-4 space-y-1">
-                                <li>• ERA5 historical weather (temp, wind, humidity)</li>
-                                <li>• Fuel load data for that year</li>
-                            </ul>
+                            <p class="text-sm font-medium text-slate-800">(Optional) Adjust Fire Start Parameter</p>
+                            <p class="text-xs text-slate-500 mt-1">Default is 0. Modify only if needed.</p>
                         </div>
                     </div>
 
                     <div class="flex items-start gap-3">
                         <div class="bg-orange-100 text-orange-600 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shrink-0">3</div>
                         <div>
-                            <p class="text-sm font-medium text-slate-800">Run Prediction</p>
-                            <p class="text-xs text-slate-500 mt-1">Click "Run Analysis" to get ROS prediction</p>
+                            <p class="text-sm font-medium text-slate-800">Run Grid Prediction</p>
+                            <p class="text-xs text-slate-500 mt-1">Click "Run Grid Prediction" to analyze all of Portugal</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <p class="text-xs font-semibold text-blue-900 mb-2">ℹ️ Automatic Data Collection</p>
-                    <p class="text-xs text-blue-700">All model variables are fetched automatically from ERA5 reanalysis and fuel load rasters. No manual input needed!</p>
+                    <p class="text-xs font-semibold text-blue-900 mb-2">ℹ️ Automatic Grid-Based Analysis</p>
+                    <p class="text-xs text-blue-700">The system will automatically fetch weather, fuel load, and burned area data for every 0.1° grid cell across Portugal and run predictions!</p>
                 </div>
             </div>
 
-            <button onclick="runPrediction()"
+            <button onclick="runGridPrediction()"
                 class="shrink-0 bg-slate-900 hover:bg-orange-600 text-white h-14 rounded-xl font-medium text-lg shadow-lg shadow-orange-500/20 transition-all flex items-center justify-center gap-2">
-                <i class="ph-trend-up"></i> Run Fire Analysis
+                <i class="ph-trend-up"></i> Run Grid Prediction
             </button>
         </div>
 
@@ -149,9 +151,34 @@
             <div class="glass-panel rounded-xl flex-1 relative overflow-hidden group">
                 <div id="map" class="w-full h-full z-0"></div>
 
-                <div class="absolute top-4 right-4 z-[400] bg-white/90 backdrop-blur rounded-lg shadow-sm p-2">
-                    <div class="text-xs font-semibold text-slate-500 mb-1 px-2">Coordinates</div>
-                    <div class="font-mono text-sm text-slate-800 px-2" id="coord-display">Select location...</div>
+                <div class="absolute top-4 right-4 z-[400] bg-white/90 backdrop-blur rounded-lg shadow-sm p-3">
+                    <div class="text-xs font-semibold text-slate-500 mb-1">Grid Status</div>
+                    <div class="text-sm text-slate-800" id="grid-status">Ready...</div>
+                </div>
+
+                <!-- Legend -->
+                <div class="absolute bottom-4 right-4 z-[400] bg-white/90 backdrop-blur rounded-lg shadow-sm p-3">
+                    <div class="text-xs font-semibold text-slate-700 mb-2">Rate of Spread (m/min)</div>
+                    <div class="flex gap-1 items-center">
+                        <div class="w-8 h-4" style="background: #1a9850"></div>
+                        <span class="text-xs text-slate-600">Low</span>
+                    </div>
+                    <div class="flex gap-1 items-center">
+                        <div class="w-8 h-4" style="background: #91cf60"></div>
+                        <span class="text-xs text-slate-600">0-2</span>
+                    </div>
+                    <div class="flex gap-1 items-center">
+                        <div class="w-8 h-4" style="background: #fee08b"></div>
+                        <span class="text-xs text-slate-600">2-5</span>
+                    </div>
+                    <div class="flex gap-1 items-center">
+                        <div class="w-8 h-4" style="background: #fc8d59"></div>
+                        <span class="text-xs text-slate-600">5-10</span>
+                    </div>
+                    <div class="flex gap-1 items-center">
+                        <div class="w-8 h-4" style="background: #d73027"></div>
+                        <span class="text-xs text-slate-600">High (&gt;10)</span>
+                    </div>
                 </div>
             </div>
 
@@ -159,21 +186,21 @@
 
                 <div class="glass-panel rounded-xl p-5 relative overflow-hidden">
                     <div class="flex justify-between items-start mb-2">
-                        <h4 class="text-xs font-bold text-slate-400 uppercase">Fuel Load</h4>
-                        <i class="ph-flame text-slate-300 text-xl"></i>
+                        <h4 class="text-xs font-bold text-slate-400 uppercase">Total Cells</h4>
+                        <i class="ph-grid-four text-slate-300 text-xl"></i>
                     </div>
-                    <div id="fuel-data" class="mt-2">
-                        <span class="text-slate-400 text-sm italic">Select date & location...</span>
+                    <div id="total-cells" class="mt-2">
+                        <span class="text-3xl font-bold text-slate-800">--</span>
                     </div>
                 </div>
 
                 <div class="glass-panel rounded-xl p-5 relative overflow-hidden">
                     <div class="flex justify-between items-start mb-2">
-                        <h4 class="text-xs font-bold text-slate-400 uppercase">ERA5 Weather</h4>
-                        <i class="ph-cloud-rain text-slate-300 text-xl"></i>
+                        <h4 class="text-xs font-bold text-slate-400 uppercase">Successful</h4>
+                        <i class="ph-check-circle text-slate-300 text-xl"></i>
                     </div>
-                    <div id="met-data" class="mt-2">
-                        <span class="text-slate-400 text-sm italic">Select date & location...</span>
+                    <div id="successful-cells" class="mt-2">
+                        <span class="text-3xl font-bold text-green-600">--</span>
                     </div>
                 </div>
 
@@ -182,9 +209,9 @@
                     <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 to-red-600"></div>
 
                     <div class="text-center">
-                        <h4 class="text-xs font-bold text-slate-400 uppercase">Rate of Spread</h4>
+                        <h4 class="text-xs font-bold text-slate-400 uppercase">Avg. Rate of Spread</h4>
                         <div class="flex items-baseline justify-center gap-1">
-                            <span id="ros-output" class="text-3xl font-bold text-white tracking-tight">--</span>
+                            <span id="avg-ros-output" class="text-3xl font-bold text-white tracking-tight">--</span>
                             <span class="text-xs text-slate-400 font-medium">m/min</span>
                         </div>
                     </div>
@@ -192,11 +219,11 @@
                     <div class="w-24 h-px bg-slate-700/50"></div>
 
                     <div class="text-center">
-                        <h4 class="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">Expected Error
+                        <h4 class="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">Max ROS
                         </h4>
                         <div class="flex items-baseline justify-center gap-1">
-                            <span id="error-output" class="text-lg font-semibold text-slate-300">--</span>
-                            <span class="text-xs text-slate-500">%</span>
+                            <span id="max-ros-output" class="text-lg font-semibold text-slate-300">--</span>
+                            <span class="text-xs text-slate-500">m/min</span>
                         </div>
                     </div>
                 </div>
@@ -216,169 +243,135 @@
             maxZoom: 19
         }).addTo(map);
 
-        let currentMarker = null;
+        const API_BASE_URL = 'http://localhost:5050/api';
 
-        map.on('click', function (e) {
-            const lat = e.latlng.lat;
-            const lng = e.latlng.lng;
+        // Store grid layer
+        let gridLayer = null;
 
-            // Update Marker
-            if (currentMarker) map.removeLayer(currentMarker);
-            currentMarker = L.marker([lat, lng]).addTo(map);
+        // --- 2. COLOR SCALE FOR PREDICTIONS ---
+        function getColorForROS(ros) {
+            if (ros < 2) return '#1a9850';
+            if (ros < 5) return '#91cf60';
+            if (ros < 10) return '#fee08b';
+            if (ros < 15) return '#fc8d59';
+            return '#d73027';
+        }
 
-            // Update UI
-            document.getElementById('coord-display').innerText = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-
-            // Trigger Placeholder Data Fetch
-            simulateDataFetch(lat, lng);
-        });
-
-        // --- 2. REAL DATA FETCH (Connected to Flask Backend - CDS API) ---
-        const API_BASE_URL = 'http://localhost:5000/api';  // Change to your deployment URL
-
-        // Store fetched data globally for prediction
-        let fetchedData = null;
-
-        async function simulateDataFetch(lat, lng) {
-            const fuelDiv = document.getElementById('fuel-data');
-            const metDiv = document.getElementById('met-data');
-
-            // Get datetime input
+        // --- 3. RUN GRID PREDICTION ---
+        async function runGridPrediction() {
             const datetimeInput = document.getElementById('datetime-input');
             const datetimeValue = datetimeInput.value;
+            const fStartValue = parseFloat(document.getElementById('f-start-input').value) || 0;
+            const modelType = document.getElementById('model-selector').value;
 
             if (!datetimeValue) {
-                fuelDiv.innerHTML = '<span class="text-red-500 text-xs">⚠️ Enter date/time first</span>';
-                metDiv.innerHTML = '<span class="text-red-500 text-xs">⚠️ Enter date/time first</span>';
-                alert('Please select a historical fire event date/time before querying location data.');
+                alert('Please select a date/time before running prediction!');
                 return;
             }
 
             // Convert datetime-local format to API format (YYYY-MM-DD HH:MM)
             const datetime = datetimeValue.replace('T', ' ');
 
-            // Set Loading State
-            fuelDiv.innerHTML = '<div class="loader ease-linear rounded-full border-2 border-t-2 border-gray-200 h-5 w-5"></div>';
-            metDiv.innerHTML = '<div class="loader ease-linear rounded-full border-2 border-t-2 border-gray-200 h-5 w-5"></div>';
+            // Update UI to loading state
+            document.getElementById('grid-status').innerText = 'Running predictions...';
+            document.getElementById('total-cells').innerHTML = '<div class="loader ease-linear rounded-full border-2 border-t-2 border-gray-200 h-8 w-8"></div>';
+            document.getElementById('successful-cells').innerHTML = '<div class="loader ease-linear rounded-full border-2 border-t-2 border-gray-200 h-8 w-8"></div>';
+            document.getElementById('avg-ros-output').innerText = '...';
+            document.getElementById('max-ros-output').innerText = '...';
+
+            // Clear existing grid layer
+            if (gridLayer) {
+                map.removeLayer(gridLayer);
+            }
 
             try {
-                // Fetch data from Flask backend with datetime
-                const response = await fetch(`${API_BASE_URL}/location-data`, {
+                const response = await fetch(`${API_BASE_URL}/predict-grid`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        lat,
-                        lon: lng,
-                        datetime: datetime
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    const fuelLoad = data.fuel_load;
-                    const met = data.meteorology;
-                    const year = data.year;
-
-                    // Store data globally for prediction
-                    fetchedData = {
-                        lat: lat,
-                        lon: lng,
                         datetime: datetime,
-                        fuel_load: fuelLoad,
-                        meteorology: met,
-                        year: year
-                    };
-
-                    // Update Fuel Load Panel
-                    fuelDiv.innerHTML = `
-                        <div class="mt-1">
-                            <div class="text-xs text-slate-400 mb-1">Year: ${year}</div>
-                            <div class="font-mono text-2xl font-bold text-orange-600">${fuelLoad !== null ? fuelLoad.toFixed(2) : 'N/A'}</div>
-                            <div class="text-xs text-slate-400 mt-1">kg/m²</div>
-                        </div>
-                    `;
-
-                    // Update Meteorology Panel
-                    metDiv.innerHTML = `
-                         <div class="grid grid-cols-2 gap-2 mt-1">
-                            <div><div class="text-xs text-slate-400">Wind</div><div class="font-mono text-sm font-semibold">${met.wind_speed ? met.wind_speed.toFixed(1) + ' km/h' : 'N/A'}</div></div>
-                            <div><div class="text-xs text-slate-400">Humid</div><div class="font-mono text-sm font-semibold">${met.humidity ? Math.round(met.humidity) + '%' : 'N/A'}</div></div>
-                            <div><div class="text-xs text-slate-400">Temp</div><div class="font-mono text-sm font-semibold">${met.temperature ? met.temperature.toFixed(1) + '°C' : 'N/A'}</div></div>
-                            <div><div class="text-xs text-slate-400">Dir</div><div class="font-mono text-sm font-semibold">${met.wind_direction ? Math.round(met.wind_direction) + '°' : 'N/A'}</div></div>
-                        </div>
-                    `;
-                } else {
-                    throw new Error(data.error || 'Failed to fetch location data');
-                }
-
-            } catch (error) {
-                console.error('Error fetching location data:', error);
-                fuelDiv.innerHTML = '<span class="text-red-500 text-xs">Error loading data</span>';
-                metDiv.innerHTML = `<span class="text-red-500 text-xs">${error.message}</span>`;
-            }
-        }
-
-        // --- 3. PREDICTION LOGIC (Connected to Flask Backend) ---
-        async function runPrediction() {
-            const rosOutput = document.getElementById('ros-output');
-            const errorOutput = document.getElementById('error-output');
-
-            // Check if data has been fetched
-            if (!fetchedData) {
-                alert('Please select a date/time and click on the map to fetch data first!');
-                return;
-            }
-
-            rosOutput.innerText = "...";
-            errorOutput.innerText = "...";
-
-            try {
-                // Get selected model type
-                const modelType = document.getElementById('model-selector').value;
-
-                // TODO: In future, build variables from fetchedData automatically
-                // For now, just make a placeholder prediction
-                const met = fetchedData.meteorology;
-                const fuel_load = fetchedData.fuel_load;
-
-                // Build variables from fetched data (simplified for now)
-                const variables = {
-                    "wind_speed_midflame": met.wind_speed || 0,
-                    "wind_direction": met.wind_direction || 0,
-                    "slope": 0,  // TODO: Add slope from raster
-                    "1h_fuel_moisture": 0,  // TODO: Calculate from met data
-                    "fuel_load": fuel_load || 0
-                };
-
-                // Make API call
-                const response = await fetch(`${API_BASE_URL}/predict`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
                         model: modelType,
-                        variables: variables
+                        f_start: fStartValue,
+                        duration_p: 60  // Always 60 minutes
                     })
                 });
 
                 const data = await response.json();
 
                 if (data.success) {
-                    rosOutput.innerText = data.prediction.toFixed(2);
-                    errorOutput.innerText = `±${data.error_estimate.toFixed(1)}`;
+                    const predictions = data.predictions;
+                    const totalCells = data.total_cells;
+                    const successfulCells = data.successful_cells;
+
+                    // Update stats
+                    document.getElementById('grid-status').innerText = `${successfulCells} / ${totalCells} cells`;
+                    document.getElementById('total-cells').innerHTML = `<span class="text-3xl font-bold text-slate-800">${totalCells}</span>`;
+                    document.getElementById('successful-cells').innerHTML = `<span class="text-3xl font-bold text-green-600">${successfulCells}</span>`;
+
+                    // Calculate stats
+                    if (predictions.length > 0) {
+                        const rosValues = predictions.map(p => p.prediction);
+                        const avgRos = rosValues.reduce((a, b) => a + b, 0) / rosValues.length;
+                        const maxRos = Math.max(...rosValues);
+
+                        document.getElementById('avg-ros-output').innerText = avgRos.toFixed(2);
+                        document.getElementById('max-ros-output').innerText = maxRos.toFixed(2);
+
+                        // Draw grid on map
+                        const rectangles = [];
+                        predictions.forEach(pred => {
+                            const lat = pred.lat;
+                            const lon = pred.lon;
+                            const ros = pred.prediction;
+                            const color = getColorForROS(ros);
+
+                            // Create rectangle for 0.1° cell
+                            const bounds = [
+                                [lat - 0.05, lon - 0.05],
+                                [lat + 0.05, lon + 0.05]
+                            ];
+
+                            const rect = L.rectangle(bounds, {
+                                color: color,
+                                fillColor: color,
+                                fillOpacity: 0.6,
+                                weight: 1
+                            }).bindPopup(`
+                                <strong>ROS Prediction</strong><br>
+                                Lat: ${lat.toFixed(4)}<br>
+                                Lon: ${lon.toFixed(4)}<br>
+                                ROS: ${ros.toFixed(2)} m/min<br>
+                                Error: ±${pred.error_estimate.toFixed(2)} m/min
+                            `);
+
+                            rectangles.push(rect);
+                        });
+
+                        // Create layer group
+                        gridLayer = L.layerGroup(rectangles).addTo(map);
+
+                        document.getElementById('grid-status').innerText = `Predictions complete!`;
+                    } else {
+                        document.getElementById('avg-ros-output').innerText = 'N/A';
+                        document.getElementById('max-ros-output').innerText = 'N/A';
+                        document.getElementById('grid-status').innerText = 'No valid predictions';
+                        alert('No valid predictions were generated. Check if data is available for this date.');
+                    }
+
                 } else {
                     throw new Error(data.error || 'Prediction failed');
                 }
 
             } catch (error) {
-                console.error('Error running prediction:', error);
-                rosOutput.innerText = 'ERR';
-                errorOutput.innerText = '--';
-                alert('Error running prediction: ' + error.message);
+                console.error('Error running grid prediction:', error);
+                document.getElementById('grid-status').innerText = 'Error occurred';
+                document.getElementById('total-cells').innerHTML = '<span class="text-red-500 text-sm">ERR</span>';
+                document.getElementById('successful-cells').innerHTML = '<span class="text-red-500 text-sm">ERR</span>';
+                document.getElementById('avg-ros-output').innerText = 'ERR';
+                document.getElementById('max-ros-output').innerText = 'ERR';
+                alert('Error running grid prediction: ' + error.message);
             }
         }
     </script>
