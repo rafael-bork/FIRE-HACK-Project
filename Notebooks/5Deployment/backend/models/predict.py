@@ -23,7 +23,7 @@ def run_prediction(model_name, variables):
 
     X = pd.DataFrame([feature_values], columns=expected_vars)
     prediction = model.predict(X)[0]
-    error_estimate = abs(prediction * 0.15)
+    error_estimate = abs(prediction * 0.15) # TODO: mega aldrabado, fix this.
 
     return {
         "success": True,
