@@ -44,12 +44,14 @@ def create_app():
     from backend.routes.predict import bp as predict_bp
     from backend.routes.raster import bp as raster_bp
     from backend.routes.cds_test import bp as cds_test_bp
+    from backend.routes.grid_predict import bp as grid_predict_bp
 
     app.register_blueprint(base_bp)
     app.register_blueprint(location_bp)
     app.register_blueprint(predict_bp)
     app.register_blueprint(raster_bp)
     app.register_blueprint(cds_test_bp)
+    app.register_blueprint(grid_predict_bp)
 
     print(f"\nEndpoints:")
     print(f"   GET  /api/status          - Check API status")
@@ -57,6 +59,7 @@ def create_app():
     print(f"   GET  /api/test-cds        - Test CDS connection")
     print(f"   POST /api/location-data   - Fetch weather + fuel data")
     print(f"   POST /api/predict         - Run prediction model")
+    print(f"   POST /api/predict-grid    - Run grid predictions across Portugal")
 
     print(f"\nExample request:")
     print(f'   curl -X POST http://localhost:5050/api/location-data \\')
