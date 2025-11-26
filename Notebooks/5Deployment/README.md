@@ -32,7 +32,9 @@ Complete deployment guide for the Fire Rate of Spread (ROS) prediction web appli
          │
          ├──► Models (Linear, XGBoost, RFR)
          ├──► Raster Data (COG files)
-         └──► Weather API (Open-Meteo)
+         └──► Weather APIs:
+              - Open-Meteo (real-time)
+              - CDS API / ERA5 (historical)
 ```
 
 ### Components:
@@ -40,7 +42,9 @@ Complete deployment guide for the Fire Rate of Spread (ROS) prediction web appli
 - **Frontend**: HTML/CSS/JavaScript with Leaflet for maps
 - **Backend**: Flask REST API serving predictions
 - **Data Layer**: Cloud-Optimized GeoTIFFs for topography
-- **External APIs**: Open-Meteo for weather data
+- **External APIs**:
+  - Open-Meteo (real-time weather, default)
+  - CDS API / ERA5 (historical reanalysis, optional)
 
 ---
 
@@ -156,7 +160,9 @@ Content-Type: application/json
 
 {
   "lat": 39.5,
-  "lon": -8.0
+  "lon": -8.0,
+  "api": "openmeteo",  // optional: "openmeteo" (default) or "cds"
+  "datetime": "2023-08-15 14:00"  // optional: for historical CDS queries
 }
 ```
 
@@ -176,9 +182,22 @@ Content-Type: application/json
     "wind_direction": 270,
     "cloud_cover": 45,
     "solar_radiation": 800
-  }
+  },
+  "api_used": "openmeteo"
 }
 ```
+
+**For historical weather (CDS API):**
+```json
+{
+  "lat": 39.5,
+  "lon": -8.0,
+  "api": "cds",
+  "datetime": "2023-08-15 14:00"
+}
+```
+
+See `CDS_API_GUIDE.md` for setup instructions.
 
 #### 2. Run Prediction
 ```http

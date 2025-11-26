@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FireROS | Rate of Spread Prediction</title>
+    <title>FireROS | Historical Fire Analysis</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -66,7 +66,7 @@
             </div>
             <div>
                 <h1 class="font-semibold text-slate-800 text-lg tracking-tight">FireROS <span
-                        class="text-slate-400 font-light">Predictive Model</span></h1>
+                        class="text-slate-400 font-light">Historical Analysis</span></h1>
             </div>
             <div class="ml-4 pl-4 border-l border-slate-200">
                 <select id="model-selector" onchange="switchModel(this.value)"
@@ -88,6 +88,15 @@
     <main class="flex-1 grid grid-cols-12 gap-6 p-6 overflow-hidden">
 
         <div class="col-span-4 flex flex-col gap-6 h-full overflow-hidden">
+
+            <!-- DateTime Selector -->
+            <div class="glass-panel rounded-xl p-4 shrink-0">
+                <label class="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">Historical Fire Event Date/Time</label>
+                <input type="datetime-local" id="datetime-input"
+                    class="input-field w-full bg-slate-50 border border-slate-200 rounded-md px-3 py-2 text-sm text-slate-700"
+                    required>
+                <p class="text-xs text-slate-400 mt-2">⚠️ Required for ERA5 weather data (Format: YYYY-MM-DD HH:MM)</p>
+            </div>
 
             <div class="glass-panel rounded-xl p-1 flex gap-1 shrink-0">
                 <button onclick="switchTab('manual')" id="tab-manual"
@@ -249,25 +258,43 @@
             simulateDataFetch(lat, lng);
         });
 
-        // --- 3. REAL DATA FETCH (Connected to Flask Backend) ---
+        // --- 3. REAL DATA FETCH (Connected to Flask Backend - CDS API) ---
         const API_BASE_URL = 'http://localhost:5000/api';  // Change to your deployment URL
 
         async function simulateDataFetch(lat, lng) {
             const topoDiv = document.getElementById('topo-data');
             const metDiv = document.getElementById('met-data');
 
+            // Get datetime input
+            const datetimeInput = document.getElementById('datetime-input');
+            const datetimeValue = datetimeInput.value;
+
+            if (!datetimeValue) {
+                topoDiv.innerHTML = '<span class="text-red-500 text-xs">⚠️ Enter date/time first</span>';
+                metDiv.innerHTML = '<span class="text-red-500 text-xs">⚠️ Enter date/time first</span>';
+                alert('Please select a historical fire event date/time before querying location data.');
+                return;
+            }
+
+            // Convert datetime-local format to API format (YYYY-MM-DD HH:MM)
+            const datetime = datetimeValue.replace('T', ' ');
+
             // Set Loading State
             topoDiv.innerHTML = '<div class="loader ease-linear rounded-full border-2 border-t-2 border-gray-200 h-5 w-5"></div>';
             metDiv.innerHTML = '<div class="loader ease-linear rounded-full border-2 border-t-2 border-gray-200 h-5 w-5"></div>';
 
             try {
-                // Fetch data from Flask backend
+                // Fetch data from Flask backend with datetime
                 const response = await fetch(`${API_BASE_URL}/location-data`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ lat, lon: lng })
+                    body: JSON.stringify({
+                        lat,
+                        lon: lng,
+                        datetime: datetime
+                    })
                 });
 
                 const data = await response.json();
@@ -289,6 +316,8 @@
                          <div class="grid grid-cols-2 gap-2 mt-1">
                             <div><div class="text-xs text-slate-400">Wind</div><div class="font-mono text-sm font-semibold">${met.wind_speed ? met.wind_speed.toFixed(1) + ' km/h' : 'N/A'}</div></div>
                             <div><div class="text-xs text-slate-400">Humid</div><div class="font-mono text-sm font-semibold">${met.humidity ? Math.round(met.humidity) + '%' : 'N/A'}</div></div>
+                            <div><div class="text-xs text-slate-400">Temp</div><div class="font-mono text-sm font-semibold">${met.temperature ? met.temperature.toFixed(1) + '°C' : 'N/A'}</div></div>
+                            <div><div class="text-xs text-slate-400">Source</div><div class="font-mono text-xs font-semibold text-blue-600">${met.source || 'ERA5'}</div></div>
                         </div>
                     `;
                 } else {
@@ -298,7 +327,7 @@
             } catch (error) {
                 console.error('Error fetching location data:', error);
                 topoDiv.innerHTML = '<span class="text-red-500 text-xs">Error loading data</span>';
-                metDiv.innerHTML = '<span class="text-red-500 text-xs">Error loading data</span>';
+                metDiv.innerHTML = `<span class="text-red-500 text-xs">${error.message}</span>`;
             }
         }
 
