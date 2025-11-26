@@ -105,6 +105,11 @@ def fetch_weather_data(lat, lon, datetime_str=None):
     """
     Fetch historical weather data from CDS API (ERA5 reanalysis)
 
+    Fetches from multiple ERA5 datasets:
+    - ERA5 Single Levels: CAPE, soil water, 100m wind
+    - ERA5 Pressure Levels: water vapor, geopotential at 850/700 hPa
+    - CEMS Fire Weather: Fire Weather Index
+
     Parameters:
     -----------
     lat : float
@@ -139,31 +144,29 @@ def fetch_weather_data(lat, lon, datetime_str=None):
         if days_ago < 5:
             print(f"⚠️  ERA5 data may not yet be available for {target_dt}")
             print(f"   Requested date is only {days_ago} days ago. ERA5 typically has a 5-day delay.")
-            # Continue anyway - CDS API will queue the request or fail gracefully
 
-        # Create cache filename
-        cache_file = ERA5_CACHE_DIR / f"ERA5_{target_dt.strftime('%Y%m%d_%H')}_{lat:.2f}_{lon:.2f}.nc"
+        # Create cache filenames
+        cache_sl = ERA5_CACHE_DIR / f"ERA5_SL_{target_dt.strftime('%Y%m%d_%H')}_{lat:.2f}_{lon:.2f}.nc"
+        cache_pl = ERA5_CACHE_DIR / f"ERA5_PL_{target_dt.strftime('%Y%m%d_%H')}_{lat:.2f}_{lon:.2f}.nc"
+        cache_fwi = ERA5_CACHE_DIR / f"ERA5_FWI_{target_dt.strftime('%Y%m%d_%H')}_{lat:.2f}_{lon:.2f}.nc"
 
-        # Check cache
-        if cache_file.exists():
-            print(f"Loading cached ERA5 data: {cache_file.name}")
-            ds = xr.open_dataset(cache_file)
+        # Bounding box around point (±0.5 degrees)
+        area = [lat + 0.5, lon - 0.5, lat - 0.5, lon + 0.5]  # [N, W, S, E]
+
+        # ========== ERA5 Single Levels ==========
+        if cache_sl.exists():
+            print(f"Loading cached ERA5 Single Levels: {cache_sl.name}")
+            ds_sl = xr.open_dataset(cache_sl)
         else:
-            # Download from CDS API
-            print(f"Downloading ERA5 data for {target_dt}...")
-
-            # Bounding box around point (±0.5 degrees)
-            area = [lat + 0.5, lon - 0.5, lat - 0.5, lon + 0.5]  # [N, W, S, E]
-
-            # ERA5 Land request (2m temperature, wind, pressure)
-            request_land = {
+            print(f"Downloading ERA5 Single Levels for {target_dt}...")
+            request_sl = {
                 "product_type": ["reanalysis"],
                 "variable": [
-                    "2m_temperature",
-                    "2m_dewpoint_temperature",
-                    "10m_u_component_of_wind",
-                    "10m_v_component_of_wind",
-                    "surface_pressure"
+                    "100m_u_component_of_wind",
+                    "100m_v_component_of_wind",
+                    "convective_available_potential_energy",
+                    "volumetric_soil_water_layer_3",  # 28-100 cm depth
+                    "volumetric_soil_water_layer_4"   # 100-289 cm depth
                 ],
                 "year": str(target_dt.year),
                 "month": f"{target_dt.month:02d}",
@@ -173,54 +176,116 @@ def fetch_weather_data(lat, lon, datetime_str=None):
                 "download_format": "unarchived",
                 "area": area
             }
+            temp_file = cache_sl.with_suffix('.temp.nc')
+            cds_client.retrieve("reanalysis-era5-single-levels", request_sl, str(temp_file))
+            temp_file.rename(cache_sl)
+            ds_sl = xr.open_dataset(cache_sl)
 
-            # Download
-            temp_file = cache_file.with_suffix('.temp.nc')
-            cds_client.retrieve("reanalysis-era5-land", request_land, str(temp_file))
-            temp_file.rename(cache_file)
+        # ========== ERA5 Pressure Levels ==========
+        if cache_pl.exists():
+            print(f"Loading cached ERA5 Pressure Levels: {cache_pl.name}")
+            ds_pl = xr.open_dataset(cache_pl)
+        else:
+            print(f"Downloading ERA5 Pressure Levels for {target_dt}...")
+            request_pl = {
+                "product_type": ["reanalysis"],
+                "variable": [
+                    "geopotential",
+                    "temperature",
+                    "specific_humidity"  # Water vapor
+                ],
+                "pressure_level": ["850", "700", "1000"],
+                "year": str(target_dt.year),
+                "month": f"{target_dt.month:02d}",
+                "day": [f"{target_dt.day:02d}"],
+                "time": [f"{target_dt.hour:02d}:00"],
+                "data_format": "netcdf",
+                "download_format": "unarchived",
+                "area": area
+            }
+            temp_file = cache_pl.with_suffix('.temp.nc')
+            cds_client.retrieve("reanalysis-era5-pressure-levels", request_pl, str(temp_file))
+            temp_file.rename(cache_pl)
+            ds_pl = xr.open_dataset(cache_pl)
 
-            ds = xr.open_dataset(cache_file)
+        # ========== CEMS Fire Weather Index ==========
+        if cache_fwi.exists():
+            print(f"Loading cached FWI: {cache_fwi.name}")
+            ds_fwi = xr.open_dataset(cache_fwi)
+        else:
+            print(f"Downloading FWI for {target_dt}...")
+            request_fwi = {
+                "product_type": "reanalysis",
+                "variable": ["fire_weather_index"],
+                "dataset_type": "consolidated_dataset",
+                "system_version": "4_1",
+                "year": str(target_dt.year),
+                "month": f"{target_dt.month:02d}",
+                "day": [f"{target_dt.day:02d}"],
+                "grid": "original_grid",
+                "data_format": "netcdf"
+            }
+            temp_file = cache_fwi.with_suffix('.temp.nc')
+            cds_client.retrieve("cems-fire-historical-v1", request_fwi).download(str(temp_file))
+            temp_file.rename(cache_fwi)
+            ds_fwi = xr.open_dataset(cache_fwi)
 
-        # Extract data at point (nearest neighbor)
-        ds_point = ds.sel(latitude=lat, longitude=lon, method='nearest')
+        # ========== Extract data at point ==========
+        ds_sl_point = ds_sl.sel(latitude=lat, longitude=lon, method='nearest')
+        ds_pl_point = ds_pl.sel(latitude=lat, longitude=lon, method='nearest')
+        ds_fwi_point = ds_fwi.sel(latitude=lat, longitude=lon, method='nearest')
 
-        # Calculate wind speed and direction from u/v components
-        u_wind = float(ds_point['u10'].values)
-        v_wind = float(ds_point['v10'].values)
-        wind_speed = np.sqrt(u_wind**2 + v_wind**2)  # m/s
-        wind_direction = (np.degrees(np.arctan2(u_wind, v_wind)) + 180) % 360  # degrees
+        # Extract Single Level variables
+        u_100 = float(ds_sl_point['u100'].values)
+        v_100 = float(ds_sl_point['v100'].values)
+        cape = float(ds_sl_point['cape'].values)
+        swvl3 = float(ds_sl_point['swvl3'].values)  # Soil water layer 3
+        swvl4 = float(ds_sl_point['swvl4'].values)  # Soil water layer 4
 
-        # Extract other variables
-        temp_2m = float(ds_point['t2m'].values) - 273.15  # K to °C
-        dewpoint = float(ds_point['d2m'].values) - 273.15  # K to °C
-        pressure = float(ds_point['sp'].values) / 100  # Pa to hPa
+        # Calculate 100m wind speed
+        wv100_k = np.sqrt(u_100**2 + v_100**2)  # m/s
 
-        # Calculate relative humidity from temperature and dewpoint
-        def calculate_relative_humidity(temp_c, dewpoint_c):
-            """Magnus formula for RH calculation"""
-            temp_k = temp_c + 273.15
-            dewpoint_k = dewpoint_c + 273.15
-            es = 6.112 * np.exp((17.67 * temp_c) / (temp_c + 243.5))
-            e = 6.112 * np.exp((17.67 * dewpoint_c) / (dewpoint_c + 243.5))
-            return (e / es) * 100
+        # Extract Pressure Level variables
+        wv_850 = float(ds_pl_point['q'].sel(pressure_level=850).values)  # kg/kg
+        wv_1000 = float(ds_pl_point['q'].sel(pressure_level=1000).values)  # kg/kg
+        z_850 = float(ds_pl_point['z'].sel(pressure_level=850).values)  # m²/s²
+        z_700 = float(ds_pl_point['z'].sel(pressure_level=700).values)  # m²/s²
+        t_850 = float(ds_pl_point['t'].sel(pressure_level=850).values) - 273.15  # K to °C
+        t_700 = float(ds_pl_point['t'].sel(pressure_level=700).values) - 273.15  # K to °C
 
-        humidity = calculate_relative_humidity(temp_2m, dewpoint)
+        # Extract FWI
+        fwi = float(ds_fwi_point['fwi'].values)
 
-        # Note: ERA5 Land doesn't include cloud cover or solar radiation
-        # These would need to be fetched from ERA5 Single Levels separately
+        # Calculate derived variables
+        sW_100_av = (swvl3 + swvl4) / 2  # Average soil water at 100cm depth
+        gT_8_7_av = ((z_850 - z_700) / 9.81) / 1000  # Geopotential height difference in km
 
+        # Build result dictionary with your variable names
         result = {
-            "temperature": temp_2m,
-            "humidity": humidity,
-            "wind_speed": wind_speed * 3.6,  # m/s to km/h
-            "wind_direction": wind_direction,
-            "pressure": pressure,
+            # Required variables for your model
+            "sW_100_av": sW_100_av,
+            "FWI_12h_av": fwi,  # Using current FWI (12h average would need multiple timesteps)
+            "wv100_k_av": wv100_k * 3.6,  # m/s to km/h
+            "wv_850_av": wv_850 * 1000,  # kg/kg to g/kg
+            "Cape_av": cape,
+            "gT_8_7_av": gT_8_7_av,
+
+            # Additional useful variables
+            "temperature_850": t_850,
+            "temperature_700": t_700,
+            "wind_100m_speed": wv100_k * 3.6,  # km/h
+            "water_vapor_1000": wv_1000 * 1000,  # g/kg
+
+            # Metadata
             "source": "ERA5",
-            "datetime": target_dt.isoformat(),
-            "note": "Cloud cover and solar radiation not available in ERA5 Land"
+            "datetime": target_dt.isoformat()
         }
 
-        ds.close()
+        # Close datasets
+        ds_sl.close()
+        ds_pl.close()
+        ds_fwi.close()
+
         return result
 
     except Exception as e:
