@@ -230,9 +230,9 @@ def fetch_weather_data(lat, lon, datetime_str=None):
         return None
 
 
-def fetch_topography_data(lat, lon):
+def fetch_fuel_load_data(lat, lon, year):
     """
-    Fetch topography data from rasters or external API
+    Fetch fuel load data from year-specific raster
 
     Parameters:
     -----------
@@ -240,41 +240,23 @@ def fetch_topography_data(lat, lon):
         Latitude
     lon : float
         Longitude
+    year : int
+        Year for fuel load raster (2015-2025)
 
     Returns:
     --------
-    dict : Topography variables (elevation, slope, aspect)
+    float : Fuel load value (kg/m²) or None
     """
+    # Path to fuel load rasters by year
+    FUEL_LOAD_DIR = Path('../../Data/Processed/Fuel_load')
+    fuel_load_raster = FUEL_LOAD_DIR / f'fuel_load_{year}.tif'
 
-    topo_data = {}
-
-    # Try to read from local rasters if available
-    slope_raster = RASTER_DIR / 'slope.tif'
-    aspect_raster = RASTER_DIR / 'aspect.tif'
-    elevation_raster = RASTER_DIR / 'elevation.tif'
-
-    if slope_raster.exists():
-        topo_data['slope'] = get_raster_value_at_point(slope_raster, lon, lat)
-
-    if aspect_raster.exists():
-        topo_data['aspect'] = get_raster_value_at_point(aspect_raster, lon, lat)
-
-    if elevation_raster.exists():
-        topo_data['elevation'] = get_raster_value_at_point(elevation_raster, lon, lat)
-
-    # Fallback: use Open-Meteo elevation API
-    if 'elevation' not in topo_data or topo_data['elevation'] is None:
-        try:
-            url = "https://api.open-meteo.com/v1/elevation"
-            params = {"latitude": lat, "longitude": lon}
-            response = requests.get(url, params=params)
-            data = response.json()
-            topo_data['elevation'] = data.get('elevation', [None])[0]
-        except Exception as e:
-            print(f"Error fetching elevation: {e}")
-            topo_data['elevation'] = None
-
-    return topo_data
+    if fuel_load_raster.exists():
+        fuel_load = get_raster_value_at_point(fuel_load_raster, lon, lat)
+        return fuel_load
+    else:
+        print(f"⚠️  Fuel load raster for year {year} not found: {fuel_load_raster}")
+        return None
 
 
 # ==================== API ENDPOINTS ====================
@@ -288,7 +270,7 @@ def index():
 @app.route('/api/location-data', methods=['POST'])
 def get_location_data():
     """
-    Fetch topography and historical meteorology data for a location
+    Fetch fuel load and historical meteorology data for a location
 
     Request JSON:
     {
@@ -300,7 +282,7 @@ def get_location_data():
     Response JSON:
     {
         "success": true,
-        "topography": {"elevation": 1240, "slope": 12, "aspect": 180},
+        "fuel_load": 1.5,
         "meteorology": {"temperature": 25, "humidity": 32, "wind_speed": 15, ...}
     }
     """
@@ -316,8 +298,12 @@ def get_location_data():
                 'error': 'datetime parameter is required (format: "YYYY-MM-DD HH:MM")'
             }), 400
 
-        # Fetch topography data
-        topo_data = fetch_topography_data(lat, lon)
+        # Parse datetime to extract year
+        fire_datetime = datetime.strptime(datetime_str, '%Y-%m-%d %H:%M')
+        year = fire_datetime.year
+
+        # Fetch fuel load data for the specific year
+        fuel_load = fetch_fuel_load_data(lat, lon, year)
 
         # Fetch historical weather data from CDS API
         weather_data = fetch_weather_data(lat, lon, datetime_str)
@@ -330,8 +316,9 @@ def get_location_data():
 
         return jsonify({
             'success': True,
-            'topography': topo_data,
-            'meteorology': weather_data
+            'fuel_load': fuel_load,
+            'meteorology': weather_data,
+            'year': year
         })
 
     except Exception as e:

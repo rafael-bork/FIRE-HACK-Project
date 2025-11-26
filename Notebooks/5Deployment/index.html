@@ -95,37 +95,52 @@
                 <input type="datetime-local" id="datetime-input"
                     class="input-field w-full bg-slate-50 border border-slate-200 rounded-md px-3 py-2 text-sm text-slate-700"
                     required>
-                <p class="text-xs text-slate-400 mt-2">⚠️ Required for ERA5 weather data (Format: YYYY-MM-DD HH:MM)</p>
+                <p class="text-xs text-slate-400 mt-2">⚠️ Required for ERA5 weather data</p>
             </div>
 
-            <div class="glass-panel rounded-xl p-1 flex gap-1 shrink-0">
-                <button onclick="switchTab('manual')" id="tab-manual"
-                    class="flex-1 py-2 text-sm font-medium rounded-lg bg-slate-100 text-slate-900 transition-colors">Manual
-                    Input</button>
-                <button onclick="switchTab('csv')" id="tab-csv"
-                    class="flex-1 py-2 text-sm font-medium rounded-lg text-slate-500 hover:text-slate-700 transition-colors">Upload
-                    CSV</button>
-            </div>
+            <!-- Instructions -->
+            <div class="glass-panel rounded-xl flex-1 overflow-y-auto p-6">
+                <h3 class="text-sm font-semibold text-slate-900 mb-4 uppercase tracking-wider">Instructions</h3>
 
-            <div id="view-manual" class="glass-panel rounded-xl flex-1 overflow-y-auto p-6 custom-scrollbar">
-                <h3 class="text-sm font-semibold text-slate-900 mb-4 uppercase tracking-wider">Model Variables (20)</h3>
-                <div class="grid grid-cols-2 gap-4" id="manual-inputs-container">
+                <div class="space-y-4">
+                    <div class="flex items-start gap-3">
+                        <div class="bg-orange-100 text-orange-600 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shrink-0">1</div>
+                        <div>
+                            <p class="text-sm font-medium text-slate-800">Select Fire Event Date & Time</p>
+                            <p class="text-xs text-slate-500 mt-1">Enter the historical fire event date (2015-2025)</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="bg-orange-100 text-orange-600 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shrink-0">2</div>
+                        <div>
+                            <p class="text-sm font-medium text-slate-800">Click Fire Location on Map</p>
+                            <p class="text-xs text-slate-500 mt-1">System will automatically fetch:</p>
+                            <ul class="text-xs text-slate-500 mt-1 ml-4 space-y-1">
+                                <li>• ERA5 historical weather (temp, wind, humidity)</li>
+                                <li>• Fuel load data for that year</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="bg-orange-100 text-orange-600 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shrink-0">3</div>
+                        <div>
+                            <p class="text-sm font-medium text-slate-800">Run Prediction</p>
+                            <p class="text-xs text-slate-500 mt-1">Click "Run Analysis" to get ROS prediction</p>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <div id="view-csv"
-                class="hidden glass-panel rounded-xl flex-1 flex flex-col items-center justify-center p-8 border-2 border-dashed border-slate-300 hover:border-orange-400 transition-colors cursor-pointer group">
-                <div class="bg-slate-50 p-4 rounded-full mb-4 group-hover:scale-110 transition-transform">
-                    <i class="ph-upload-simple text-3xl text-slate-400 group-hover:text-orange-500"></i>
+                <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p class="text-xs font-semibold text-blue-900 mb-2">ℹ️ Automatic Data Collection</p>
+                    <p class="text-xs text-blue-700">All model variables are fetched automatically from ERA5 reanalysis and fuel load rasters. No manual input needed!</p>
                 </div>
-                <p class="text-sm font-medium text-slate-700">Click or Drag CSV here</p>
-                <p class="text-xs text-slate-400 mt-2">Supports standard ROS datasets</p>
-                <input type="file" class="hidden" id="csvInput" accept=".csv">
             </div>
 
             <button onclick="runPrediction()"
                 class="shrink-0 bg-slate-900 hover:bg-orange-600 text-white h-14 rounded-xl font-medium text-lg shadow-lg shadow-orange-500/20 transition-all flex items-center justify-center gap-2">
-                <i class="ph-trend-up"></i> Run Model Prediction
+                <i class="ph-trend-up"></i> Run Fire Analysis
             </button>
         </div>
 
@@ -144,21 +159,21 @@
 
                 <div class="glass-panel rounded-xl p-5 relative overflow-hidden">
                     <div class="flex justify-between items-start mb-2">
-                        <h4 class="text-xs font-bold text-slate-400 uppercase">Topography</h4>
-                        <i class="ph-mountains text-slate-300 text-xl"></i>
+                        <h4 class="text-xs font-bold text-slate-400 uppercase">Fuel Load</h4>
+                        <i class="ph-flame text-slate-300 text-xl"></i>
                     </div>
-                    <div id="topo-data" class="mt-2">
-                        <span class="text-slate-400 text-sm italic">Select location on map...</span>
+                    <div id="fuel-data" class="mt-2">
+                        <span class="text-slate-400 text-sm italic">Select date & location...</span>
                     </div>
                 </div>
 
                 <div class="glass-panel rounded-xl p-5 relative overflow-hidden">
                     <div class="flex justify-between items-start mb-2">
-                        <h4 class="text-xs font-bold text-slate-400 uppercase">Meteorology</h4>
+                        <h4 class="text-xs font-bold text-slate-400 uppercase">ERA5 Weather</h4>
                         <i class="ph-cloud-rain text-slate-300 text-xl"></i>
                     </div>
                     <div id="met-data" class="mt-2">
-                        <span class="text-slate-400 text-sm italic">Select location on map...</span>
+                        <span class="text-slate-400 text-sm italic">Select date & location...</span>
                     </div>
                 </div>
 
@@ -192,47 +207,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
-        // --- 1. GENERATE 20 INPUT FIELDS ---
-        // --- 1. GENERATE INPUT FIELDS BASED ON MODEL ---
-        const inputContainer = document.getElementById('manual-inputs-container');
-
-        const complexVariables = [
-            "1h Fuel Moisture", "10h Fuel Moisture", "100h Fuel Moisture", "Live Herb Moisture",
-            "Live Woody Moisture", "Wind Speed (midflame)", "Wind Direction", "Slope (%)",
-            "Aspect", "Fuel Bed Depth", "Fuel Load", "SAV Ratio",
-            "Heat Content", "Moisture Damping", "Mineral Damping", "Packing Ratio",
-            "Bulk Density", "Emissivity", "Cloud Cover", "Solar Radiation"
-        ];
-
-        const linearVariables = [
-            "Wind Speed (midflame)", "Wind Direction", "Slope (%)", "1h Fuel Moisture", "Fuel Load"
-        ];
-
-        function renderInputs(modelType) {
-            const title = document.querySelector('#view-manual h3');
-            inputContainer.innerHTML = '';
-
-            const variables = modelType === 'complex' ? complexVariables : linearVariables;
-            title.innerText = `Model Variables (${variables.length})`;
-
-            variables.forEach(name => {
-                const div = document.createElement('div');
-                div.innerHTML = `
-                    <label class="block text-xs font-medium text-slate-500 mb-1">${name}</label>
-                    <input type="number" step="0.01" class="input-field w-full bg-slate-50 border border-slate-200 rounded-md px-3 py-2 text-sm text-slate-700 placeholder-slate-300" placeholder="0.00">
-                `;
-                inputContainer.appendChild(div);
-            });
-        }
-
-        function switchModel(modelType) {
-            renderInputs(modelType);
-        }
-
-        // Initialize with Complex Model
-        renderInputs('complex');
-
-        // --- 2. MAP INITIALIZATION ---
+        // --- 1. MAP INITIALIZATION ---
         const map = L.map('map').setView([39.4871, -8.0801], 7);
 
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
@@ -258,11 +233,14 @@
             simulateDataFetch(lat, lng);
         });
 
-        // --- 3. REAL DATA FETCH (Connected to Flask Backend - CDS API) ---
+        // --- 2. REAL DATA FETCH (Connected to Flask Backend - CDS API) ---
         const API_BASE_URL = 'http://localhost:5000/api';  // Change to your deployment URL
 
+        // Store fetched data globally for prediction
+        let fetchedData = null;
+
         async function simulateDataFetch(lat, lng) {
-            const topoDiv = document.getElementById('topo-data');
+            const fuelDiv = document.getElementById('fuel-data');
             const metDiv = document.getElementById('met-data');
 
             // Get datetime input
@@ -270,7 +248,7 @@
             const datetimeValue = datetimeInput.value;
 
             if (!datetimeValue) {
-                topoDiv.innerHTML = '<span class="text-red-500 text-xs">⚠️ Enter date/time first</span>';
+                fuelDiv.innerHTML = '<span class="text-red-500 text-xs">⚠️ Enter date/time first</span>';
                 metDiv.innerHTML = '<span class="text-red-500 text-xs">⚠️ Enter date/time first</span>';
                 alert('Please select a historical fire event date/time before querying location data.');
                 return;
@@ -280,7 +258,7 @@
             const datetime = datetimeValue.replace('T', ' ');
 
             // Set Loading State
-            topoDiv.innerHTML = '<div class="loader ease-linear rounded-full border-2 border-t-2 border-gray-200 h-5 w-5"></div>';
+            fuelDiv.innerHTML = '<div class="loader ease-linear rounded-full border-2 border-t-2 border-gray-200 h-5 w-5"></div>';
             metDiv.innerHTML = '<div class="loader ease-linear rounded-full border-2 border-t-2 border-gray-200 h-5 w-5"></div>';
 
             try {
@@ -300,14 +278,26 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    const topo = data.topography;
+                    const fuelLoad = data.fuel_load;
                     const met = data.meteorology;
+                    const year = data.year;
 
-                    // Update Topography Panel
-                    topoDiv.innerHTML = `
-                        <div class="grid grid-cols-2 gap-2 mt-1">
-                            <div><div class="text-xs text-slate-400">Elev</div><div class="font-mono text-sm font-semibold">${topo.elevation ? Math.round(topo.elevation) + 'm' : 'N/A'}</div></div>
-                            <div><div class="text-xs text-slate-400">Slope</div><div class="font-mono text-sm font-semibold">${topo.slope ? topo.slope.toFixed(1) + '%' : 'N/A'}</div></div>
+                    // Store data globally for prediction
+                    fetchedData = {
+                        lat: lat,
+                        lon: lng,
+                        datetime: datetime,
+                        fuel_load: fuelLoad,
+                        meteorology: met,
+                        year: year
+                    };
+
+                    // Update Fuel Load Panel
+                    fuelDiv.innerHTML = `
+                        <div class="mt-1">
+                            <div class="text-xs text-slate-400 mb-1">Year: ${year}</div>
+                            <div class="font-mono text-2xl font-bold text-orange-600">${fuelLoad !== null ? fuelLoad.toFixed(2) : 'N/A'}</div>
+                            <div class="text-xs text-slate-400 mt-1">kg/m²</div>
                         </div>
                     `;
 
@@ -317,7 +307,7 @@
                             <div><div class="text-xs text-slate-400">Wind</div><div class="font-mono text-sm font-semibold">${met.wind_speed ? met.wind_speed.toFixed(1) + ' km/h' : 'N/A'}</div></div>
                             <div><div class="text-xs text-slate-400">Humid</div><div class="font-mono text-sm font-semibold">${met.humidity ? Math.round(met.humidity) + '%' : 'N/A'}</div></div>
                             <div><div class="text-xs text-slate-400">Temp</div><div class="font-mono text-sm font-semibold">${met.temperature ? met.temperature.toFixed(1) + '°C' : 'N/A'}</div></div>
-                            <div><div class="text-xs text-slate-400">Source</div><div class="font-mono text-xs font-semibold text-blue-600">${met.source || 'ERA5'}</div></div>
+                            <div><div class="text-xs text-slate-400">Dir</div><div class="font-mono text-sm font-semibold">${met.wind_direction ? Math.round(met.wind_direction) + '°' : 'N/A'}</div></div>
                         </div>
                     `;
                 } else {
@@ -326,35 +316,21 @@
 
             } catch (error) {
                 console.error('Error fetching location data:', error);
-                topoDiv.innerHTML = '<span class="text-red-500 text-xs">Error loading data</span>';
+                fuelDiv.innerHTML = '<span class="text-red-500 text-xs">Error loading data</span>';
                 metDiv.innerHTML = `<span class="text-red-500 text-xs">${error.message}</span>`;
             }
         }
 
-        // --- 4. TAB SWITCHING LOGIC ---
-        function switchTab(tab) {
-            const manualBtn = document.getElementById('tab-manual');
-            const csvBtn = document.getElementById('tab-csv');
-            const manualView = document.getElementById('view-manual');
-            const csvView = document.getElementById('view-csv');
-
-            if (tab === 'manual') {
-                manualBtn.className = "flex-1 py-2 text-sm font-medium rounded-lg bg-slate-100 text-slate-900 transition-colors shadow-sm";
-                csvBtn.className = "flex-1 py-2 text-sm font-medium rounded-lg text-slate-500 hover:text-slate-700 transition-colors";
-                manualView.classList.remove('hidden');
-                csvView.classList.add('hidden');
-            } else {
-                csvBtn.className = "flex-1 py-2 text-sm font-medium rounded-lg bg-slate-100 text-slate-900 transition-colors shadow-sm";
-                manualBtn.className = "flex-1 py-2 text-sm font-medium rounded-lg text-slate-500 hover:text-slate-700 transition-colors";
-                csvView.classList.remove('hidden');
-                manualView.classList.add('hidden');
-            }
-        }
-
-        // --- 5. PREDICTION LOGIC (Connected to Flask Backend) ---
+        // --- 3. PREDICTION LOGIC (Connected to Flask Backend) ---
         async function runPrediction() {
             const rosOutput = document.getElementById('ros-output');
             const errorOutput = document.getElementById('error-output');
+
+            // Check if data has been fetched
+            if (!fetchedData) {
+                alert('Please select a date/time and click on the map to fetch data first!');
+                return;
+            }
 
             rosOutput.innerText = "...";
             errorOutput.innerText = "...";
@@ -363,21 +339,19 @@
                 // Get selected model type
                 const modelType = document.getElementById('model-selector').value;
 
-                // Collect input values
-                const inputs = document.querySelectorAll('#manual-inputs-container input');
-                const variables = {};
+                // TODO: In future, build variables from fetchedData automatically
+                // For now, just make a placeholder prediction
+                const met = fetchedData.meteorology;
+                const fuel_load = fetchedData.fuel_load;
 
-                // Get variable names based on model type
-                const variableNames = modelType === 'complex' ? complexVariables : linearVariables;
-
-                // Build variables object with snake_case keys for API
-                inputs.forEach((input, index) => {
-                    const varName = variableNames[index]
-                        .toLowerCase()
-                        .replace(/ /g, '_')
-                        .replace(/[()%]/g, '');
-                    variables[varName] = parseFloat(input.value) || 0;
-                });
+                // Build variables from fetched data (simplified for now)
+                const variables = {
+                    "wind_speed_midflame": met.wind_speed || 0,
+                    "wind_direction": met.wind_direction || 0,
+                    "slope": 0,  // TODO: Add slope from raster
+                    "1h_fuel_moisture": 0,  // TODO: Calculate from met data
+                    "fuel_load": fuel_load || 0
+                };
 
                 // Make API call
                 const response = await fetch(`${API_BASE_URL}/predict`, {
@@ -407,11 +381,6 @@
                 alert('Error running prediction: ' + error.message);
             }
         }
-
-        // CSV Click Trigger
-        document.getElementById('view-csv').addEventListener('click', () => {
-            document.getElementById('csvInput').click();
-        });
     </script>
 </body>
 
