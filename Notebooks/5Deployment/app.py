@@ -362,7 +362,7 @@ if __name__ == '__main__':
     print("🔥 Starting Fire ROS Prediction API Server...")
     print(f"   Models loaded: {list(MODELS.keys())}")
     print(f"   Raster directory: {RASTER_DIR}")
-    print(f"   Server running on http://localhost:5000")
-    print(f"   API docs: http://localhost:5000/api/models")
+    print(f"   Server running on http://localhost:5050")
+    print(f"   API docs: http://localhost:5050/api/models")
 
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5050)
