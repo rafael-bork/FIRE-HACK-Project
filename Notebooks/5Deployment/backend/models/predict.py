@@ -2,6 +2,8 @@ import pandas as pd
 from backend.models.loader import MODELS
 from backend.config import LINEAR_VARIABLES, COMPLEX_VARIABLES
 
+# TODO: import weather vars .nc file here
+
 def run_prediction(model_name, variables):
     if model_name not in MODELS:
         return {"success": False, "error": f'Model "{model_name}" not found'}

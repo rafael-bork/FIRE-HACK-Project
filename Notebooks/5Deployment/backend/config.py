@@ -1,11 +1,11 @@
 from pathlib import Path
 
 # ==================== DIRECTORIES ====================
-MODEL_DIR = Path('../../Data/Models')
-RASTER_DIR = Path('../../Data/web_rasters')
-ERA5_CACHE_DIR = Path('../../Data/Interim/Meteorological_data/ERA5_cache')
+MODEL_DIR = Path('Data/Models')
+RASTER_DIR = Path('Data/web_rasters')
+ERA5_CACHE_DIR = Path('Data/Interim/Meteorological_data/ERA5_cache')
 ERA5_CACHE_DIR.mkdir(parents=True, exist_ok=True)
-FUEL_LOAD_DIR = Path('../../Data/Processed/Fuel_load')
+FUEL_LOAD_DIR = Path('Data/Processed/Fuel_load')
 
 # ==================== VARIABLES ====================
 COMPLEX_VARIABLES = [
