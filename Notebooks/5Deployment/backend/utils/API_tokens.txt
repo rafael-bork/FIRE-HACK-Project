@@ -1,0 +1,5 @@
+CDS_URL=https://cds.climate.copernicus.eu/api
+CDS_KEY=8824a11e-13c8-46bb-a014-3ddd033b79b3
+
+EWDS_URL=https://ewds.climate.copernicus.eu/api
+EWDS_KEY=8824a11e-13c8-46bb-a014-3ddd033b79b3
