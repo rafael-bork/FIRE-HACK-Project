@@ -1,0 +1,6 @@
+2017 tem bués outliers nomeadamente os fogos de outubro, 107 progressoes têm má performance com o modelo
+isto é tambem porque temos resoluçao horaria e por isso temos muitas progressões más, 
+
+o modelo them shap estatisticamente maior no  f_start Cape sW_100 FWI_12h 8_ny ou seja está a cometer erros ao sobre valorizar a importancia destes 
+
+os outliers tendem a ter maior duration 3_8y 8_ny fuel_load FWI wv_100 e menor cape. o modelo é pior em progressoes mais extremas 

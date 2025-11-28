@@ -1,0 +1,269 @@
+A maioria duration é = 1 isto é porque os fogos de 2017 tiveram resolução horaria ou seja existem muitas progresoes de FWI_12h
+A maior parte das progressões começa e acaba em horas certas, tem um bias
+al´´em das de 1h, existe uma corr neg loglog
+
+Aspect
+Pouca relação
+Talvez haja menos ros nas encostas viradas a norte
+e menos progressoes
+Existe mais ros em encontas viradas para Oeste
+FAZER TESTE DE HIPOTESES
+
+Tens de analisar o land use em separado
+e o landform
+e o fuel model
+
+1-3years
+A maioria das prog têm valores baixos (existem bues 0)
+
+3-8years
+A maioria dos valores é baixa mas maior que 1-3
+Pouca corr com o ros
+
+8_ny
+grandes diferenças, principalmente valor alto perto de 100% mas conjuntos com 0%
+ambos parecem ser testamento da falta de gestao da floresta em areas que ardem recentemente, que rapidamente acumulam muito fuel
+e das areas que nunca arderam por isso têm muito fuel
+
+fuel fuel_load
+pouca correlaçao
+as progressoes de maior ros têm medio fuel load, n foi isso que deu lhes a força
+
+soilwater 1m
+(alem de 8 rogressoes com alto ros e baixo sW) progressões de ros maior q 4000m/hem solos com entre 0.16 e 0.22 m3/m3
+Existe uma realação negativa entre o sW e o ros_p
+conjunto de obs com 0.23
+
+soil water a 3m 
+igual à anterior (mas em 0.22 - 0.28)
+relaçao mais fraca
+conjunto de obs com 0.29
+
+as tais 8 progressões tal como as maiores q 4000 aparentam ter ordens de sW muito constantes (tp sao sempre os 7ºs valores)
+
+a corr verifica-se mais forte nos 28-100cm
+
+se calhar a reanalise nao é a melhor porque poucos valores têm sW100 = 0.245 e sW28 = 0.17 por exemplo, existe um buraco no grafico
+
+
+Temperatura
+boa correlação positiva logros_p logtemp
+valores extremos de ros nao têm temperaturas extremas
+
+Dewpoint
+boa correlação negativa logros_p logDewpoint
+
+RH
+boa correlação log ros_P log RH
+nao ha ros > 2500 em rh>55% (a exceção de 1)
+
+VPD
+boa correlação log ros_p log VPD
+nao existe fogos com mais de 2500 m/h com VPD < 1000
+nao existe fogos com mais de 4000 m/h  com amis de VPD > 4000
+
+SP 
+o grafico faz um triangulo tens uma reta de (0m/h,900hPa) para (9000m/h, 980hPa)
+
+geopotencial 
+parecido com o da pressao mas ao contrario
+
+DFMC
+nao ha ros > 2500 em dfmc>12% aporx.
+forte correlação negativa log_rosp log dfmc
+
+HDW
+boa correlação positiva log ros_p L HDW
+
+Haines
+completamente inutil ou é 2 ou é 4 ??
+pode tar mal calculado 
+deviam usar o haines modificado pois é continuo
+
+FWI
+so existem ros > 4000 em 40 < FWI < 70
+boa correlação positiva
+o modelo tem grupos e buracos de valores, é meio estranho
+
+DC
+existe um conjunto de prog com DC entre 250 e 300 ^????????????
+os outros começam só em 450?????
+fogos extremos ocorrem <4000 só acima de 800
+
+FFMC
+só existem fogos +4000 em ffmc>90
+
+wv_10
+boa corr positiva log_rosp log vento
+
+wdir
+a maioria das prog + 4000 sao de sul sudoes? pode ter a ver com a orientação dos vales?
+exstem uma boa quantidade com ventos de todas as direções nao deve ser bias
+
+w100
+excelente corr positiva log ros_p log w1000
+
+wdir 100
+distribuição muito parecido com o 10
+
+Recirc
+recirculações altas abafam o fogo, é por isso que nao existem progressões com ros não-baixo com recirc altas
+tambem tp grande parte das prog têm 1h ou menos por isso essas dificilmente teriam valores altos de recirc
+    o vento prercis de ter tempo apra ir e voltar para a recirc ser alta
+
+Circ var
+alta corr com Recirc
+quer dizer q variam no mesmo sinal
+    direção constante
+    força significativa
+    transporte líquido forte
+
+t950
+pouca corr mas existe
+
+t850
+ros extremo entre 14 e 20
+
+t700
+ros extremo entre 4 e 5
+padrao muito estranho, poucos valores até ao 4, muitos valores do 4 ao 5 e poucos valores de 5 ao 7.5 e distribuição normal com pico nos 9
+
+t500
+banda com muitos valores  (inclusive ros extremo)  nos -14 com muitos ros extremos, pocos valores ataté aos -12 e distribuiçao normal com pico nos -8.5
+
+t300 banda estranha com muitos valores de ros extremos entre -39 e -40 mas os restantes formam uma distribuiçao normal com pico em -37
+
+rh950 triangulo
+corr neg log L
+
+rh 700
+banda estranha  55 60
+
+rh 500 
+
+
+wv950 otima corr pos log log
+das prog com wv alto, os ros >2000 sao muita %
+
+wv 850 e 700 (mas menos)
+CRAZY EXTREMAMENTE BOM,  log log
+os extremos têm a maiora wv850 e wv700 alta
+
+
+wv 300 
+horrível nenhuma correlação porque?
+
+w dir 950 850 700 500
+0 corrmas continua a haver vento de sul oeste nos extremos
+
+vwv 950
+muitos downbursts fortes com alto ros porque?
+alguns upburst com alto ros porque?
+quanto mais downburst mais % sao ros extremo
+
+vwv 850 e 700 nao ha downbursts com ros extremo mas ha upbursts porque?
+
+vwv 300 e 500 nenhuma relação
+
+extremos têm:
+gp950 5600 6000
+gp850 15100 15400
+gp700 31000 31300
+
+o gp 300 tem uma linha bue marcada em 93200
+??
+´
+gT_s_9
+quando os ros_p extremos tendem a existir quando existe inversão térmica 
+
+ros extremos tendem a ter infesao termica até 950, nao entre 950 e 850
+ou nem têm ?
+what does this mean??
+
+gT 8_7 e 7_5 têm um tringulo?
+
+gT 5 3 porque existem bues entr -6.7 e -7.2 mas nenhum até aos -6.2
+
+wSv 950
+wind sheer têm erros de calculo pq existem valores de -6000km/h km
+corr positiva log log isso quer dizer que
+log(wind sheer) = 4.5 muitos valores extremos porque nao mais/menos?
+
+wsv 700
+existe um conjunto de ros extremos em 0 e entre 10 e 20
+pouca variação de direção
+
+wsv 500 poucos com mais de 11 km/ km
+alguma corr com o log do ros
+
+wsv 100 
+muita corr bem fixe log L
+quase que so existem extremos com mais de 90 de wind sheer
+
+wsdir 100
+nao existem extremos com mais de -0.5 e 1.5
+
+cbh
+com cbh menos q 2000m nao existe ros extremos
+pouca corr mas existente
+
+confirma-se com o low cc, todos os extremos têm 0 mas tambem 90% tem 0 por isso yh
+
+midcc
+tambem os ros maior tendem a ter mmenor mid cc
+
+total cc 
+0 corr
+
+cape
+corr negativamas tambem tem bué 0s
+
+cin
+nao ha nenhuns valoresmas dos q ha os com cin, ros>500 existe entre -5 e -5.5 cin like ???
+
+blh
+GANDA CORR 10/10 log log, corr positiva
+mas os maiores maiores têm blh a volta de 300m
+
+blh rt
+pergunta. too complicated
+
+LCL_m 
+corr positiva log log
+
+LFC
+existem so uns 10 abaixo de 500????
+existe uma alta densidade entre de 900 e 950 mas muito poucos entre 700 e 900??
+
+CCL
+ros extremo entre 600 e 750
+mas pode ser sample bias porque é onde temos mais observações
+
+El
+poucos valores distribuiçao homogenea
+
+Linf Ind
+pouca corr negativa log log
+
+vent Ind
+boa corr log L
+os q têm mais vent idx tendem a ter mais ros
+
+CMLG
+0 corr
+
+lag
+extrema correlação (obvio)
+dependem um do outro ne
+
+f_start
+corr boa negativa para valores acima de 0
+ros alto tende a ser no incio do fogo, ainda nao ha combate pex
+se existe um prog assinalada é porque o incendio é grande e se é grande faz sentido alto ros ser mais no inciio
+
+
+
+
+
+
+
