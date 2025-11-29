@@ -68,88 +68,99 @@ def fetch_era5_data(year, month, day, hour):
     sl_filename = f"ERA5_SL_{time_code}.nc"
     sl_target = output_folder / sl_filename  # caminho completo
 
-    single_levels_request = {
-        "product_type": ["reanalysis"],
-        "variable": [
-            "100m_u_component_of_wind",
-            "100m_v_component_of_wind",
-            "volumetric_soil_water_layer_3",
-            "convective_available_potential_energy"
-        ],
-        "year": year,
-        "month": month,
-        "day": day,
-        "time": hour,
-        "data_format": "netcdf",
-        "download_format": "unarchived",
-        "area": [43, -10, 36, -6]
-    }
+    if not sl_target.exists():
+        single_levels_request = {
+            "product_type": ["reanalysis"],
+            "variable": [
+                "100m_u_component_of_wind",
+                "100m_v_component_of_wind",
+                "volumetric_soil_water_layer_3",
+                "convective_available_potential_energy"
+            ],
+            "year": year,
+            "month": month,
+            "day": day,
+            "time": hour,
+            "data_format": "netcdf",
+            "download_format": "unarchived",
+            "area": [43, -10, 36, -6]
+        }
 
-    print(f"Requesting: {sl_filename}")
-    cds_client.retrieve("reanalysis-era5-single-levels", single_levels_request, str(sl_target))
+        print(f"Requesting: {sl_filename}")
+        cds_client.retrieve("reanalysis-era5-single-levels", single_levels_request, str(sl_target))
+        downloaded_files['single_levels'] = sl_target
+    
+    else:
+        print("SL dataset already exists")
+
     downloaded_files['single_levels'] = sl_target
-
-
-
 
 
     # ==================== PRESSURE LEVELS DATA ====================
     pl_filename = f"ERA5_PL_{time_code}.nc"
     pl_target = output_folder / pl_filename
 
-    pressure_levels_request = {
-        "product_type": ["reanalysis"],
-        "variable": [
-            "u_component_of_wind",
-            "v_component_of_wind",
-            "temperature",
-            "geopotential"
-        ],
-        "pressure_level": [
-            "700",  # 700 hPa (~3000m)
-            "850"   # 850 hPa (~1500m)
-        ],
-        "year": year,
-        "month": month,
-        "day": day,
-        "time": hour,
-        "data_format": "netcdf",
-        "download_format": "unarchived",
-        "area": [43, -10, 36, -6]
-    }
+    if not sl_target.exists():
+        pressure_levels_request = {
+            "product_type": ["reanalysis"],
+            "variable": [
+                "u_component_of_wind",
+                "v_component_of_wind",
+                "temperature",
+                "geopotential"
+            ],
+            "pressure_level": [
+                "700",  # 700 hPa (~3000m)
+                "850"   # 850 hPa (~1500m)
+            ],
+            "year": year,
+            "month": month,
+            "day": day,
+            "time": hour,
+            "data_format": "netcdf",
+            "download_format": "unarchived",
+            "area": [43, -10, 36, -6]
+        }
 
-    print(f"Requesting: {pl_filename}")
-    cds_client.retrieve("reanalysis-era5-pressure-levels", pressure_levels_request, str(pl_target))
+        print(f"Requesting: {pl_filename}")
+        cds_client.retrieve("reanalysis-era5-pressure-levels", pressure_levels_request, str(pl_target))
+        downloaded_files['pressure_levels'] = pl_target
+
+    else:
+        print("PL dataset already exists")
+
     downloaded_files['pressure_levels'] = pl_target
-
-
 
 
     # ==================== FIRE WEATHER INDEX DATA ====================
     fwi_filename = f"ERA5_FWI_{time_code}.nc"
     fwi_target = output_folder / fwi_filename
 
-    fwi_request = {
-        "product_type": "reanalysis",
-        "variable": [
-            "fire_weather_index"
-        ],
-        "dataset_type": "consolidated_dataset",
-        "system_version": ["4_1"],
-        "year": year,
-        "month": month,
-        "day": day,
-        "time": hour,
-        "grid": "original_grid",
-        "data_format": "netcdf",
-        "area": [43, -10, 36, -6]
-    }
+    if not sl_target.exists():
+        fwi_request = {
+            "product_type": "reanalysis",
+            "variable": [
+                "fire_weather_index"
+            ],
+            "dataset_type": "consolidated_dataset",
+            "system_version": ["4_1"],
+            "year": year,
+            "month": month,
+            "day": day,
+            "time": hour,
+            "grid": "original_grid",
+            "data_format": "netcdf",
+            "area": [43, -10, 36, -6]
+        }
 
-    print(f"Requesting: {fwi_filename}")
-    ewds_client.retrieve("cems-fire-historical-v1", fwi_request, str(fwi_target))
+        print(f"Requesting: {fwi_filename}")
+        ewds_client.retrieve("cems-fire-historical-v1", fwi_request, str(fwi_target))
+        downloaded_files['fwi'] = fwi_target
+
+    else:
+        print("FWI dataset already exists")
+
     downloaded_files['fwi'] = fwi_target
-
-
 
     return downloaded_files
 
