@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3:*)",
+      "Bash(/opt/anaconda3/envs/RAG/bin/python CDS_API.py)",
+      "Bash(/opt/anaconda3/envs/RAG/bin/python:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
