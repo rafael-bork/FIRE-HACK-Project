@@ -2,6 +2,8 @@
 This script compiles meteorological and GIS data for fire analysis.
 It merges meteorological variables with GIS layers, applies spatial masks, 
 and calculates cumulative mean datasets over the requested duration.
+It now saves a NetCDF with meteo + GIS + mask applied, and skips calculations
+if the requested times already exist.
 Uses modules:
 - Meteo_dataset: assemble meteorological datasets
 - geopandas: handle GIS vector data
@@ -26,6 +28,7 @@ def Compile_data(duration, mins_since_fire_start, start_time):
     This function assembles meteorological data for the requested duration,
     enriches it with GIS variables (fuel, slope, etc.), applies a spatial mask
     for Portugal cells, and calculates cumulative mean datasets per hour.
+    Saves a NetCDF with meteo+GIS+mask and reuses existing data if possible.
     
     Parameters
     ----------
@@ -42,73 +45,99 @@ def Compile_data(duration, mins_since_fire_start, start_time):
         DataFrame with cumulative mean variables per hour and spatial points.
     """
 
-    # ---------------------- Assemble meteorological dataset ----------------------
-    ds_complete = Meteo_dataset.assemble_meteorological_data(start_time, duration)
+    # ---------------------- Generate required times ----------------------
+    start_time = pd.Timestamp(start_time)
+    end_time = start_time + pd.Timedelta(hours=duration)
+    required_times = pd.date_range(start=start_time.ceil("h"), end=end_time.floor("h"), freq="1h")
 
-    # ---------------------- Open GIS dataset ----------------------
-    ds_GIS = xr.open_dataset("Data/GIS_data.nc")
-    ds_GIS = ds_GIS.rename({"lat": "latitude", "lon": "longitude"})
+    # ---------------------- Path to final FireData NetCDF ----------------------
+    netcdf_path = Path("Data") / "FireData_Complete.nc"
+    netcdf_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # ---------------------- Extract year coordinate ----------------------
-    ds_complete = ds_complete.assign_coords(
-        year=("valid_time", ds_complete.valid_time.dt.year.values)
-    )
+    # ---------------------- Load existing dataset if present ----------------------
+    ds_complete = None
+    if netcdf_path.exists():
+        try:
+            with xr.open_dataset(netcdf_path) as ds:
+                ds_complete = ds.load()
+            print("Existing FireData NetCDF found.")
+        except:
+            ds_complete = None
 
-    # ---------------------- Function to add yearly GIS variables ----------------------
-    def add_yearly_vars(ds, ds_GIS, var_names):
-        data_vars = {}
-        for var in var_names:
-            yearly_data = []
-            for year in ds.year.values:
-                gis_year = ds_GIS.sel(year=int(year))[var]
-                gis_interp = gis_year.interp(latitude=ds.latitude, longitude=ds.longitude, method="linear")
-                yearly_data.append(gis_interp)
-            data_vars[var] = xr.concat(yearly_data, dim="valid_time")
-        return ds.assign(**data_vars).drop_vars("year")
+    # ---------------------- Identify missing times ----------------------
+    if ds_complete is not None:
+        missing_times = [t for t in required_times if t not in ds_complete.valid_time]
+    else:
+        missing_times = required_times.to_list()
 
-    # ---------------------- Add GIS variables to dataset ----------------------
-    ds_complete = add_yearly_vars(ds_complete, ds_GIS, list(ds_GIS.data_vars))
+    print("Missing times", missing_times)
 
-    # ---------------------- Add fire start time variable ----------------------
-    fstart_data = xr.full_like(
-        ds_complete[list(ds_complete.data_vars.keys())[0]], 
-        mins_since_fire_start, 
-        dtype=int
-    )
-    fstart_data = fstart_data.drop_vars([var for var in fstart_data.coords if var not in ['latitude', 'longitude', 'valid_time']])
-    ds_complete = ds_complete.assign(fstart=fstart_data)
+    # ---------------------- Case: all data exists ----------------------
+    if not missing_times:
+        with xr.open_dataset(netcdf_path) as ds_complete:
+            ds_filtered = ds_complete.sel(valid_time=required_times)
+    else:
+        # ---------------------- Assemble missing meteorological data ----------------------
+        ds_meteo_missing = Meteo_dataset.assemble_meteorological_data(missing_times)
 
-    # ---------------------- Load Portugal cells GeoPackage ----------------------
-    cells_fp = "Data/Portugal_cells.gpkg"
-    gdf_cells = gpd.read_file(cells_fp)
+        # ---------------------- Open GIS dataset ----------------------
+        with xr.open_dataset("Data/GIS_data.nc") as ds_GIS:
+            ds_GIS = ds_GIS.rename({"lat": "latitude", "lon": "longitude"})
 
-    # ---------------------- Transform CRS to WGS84 ----------------------
-    if gdf_cells.crs.to_string() != "EPSG:4326":
-        gdf_cells = gdf_cells.to_crs("EPSG:4326")
+            # ---------------------- Extract year coordinate ----------------------
+            ds_meteo_missing = ds_meteo_missing.assign_coords(
+                year=("valid_time", ds_meteo_missing.valid_time.dt.year.values)
+            )
 
-    # ---------------------- Combine geometries ----------------------
-    cells_union = gdf_cells.geometry.unary_union
+            # ---------------------- Function to add yearly GIS variables ----------------------
+            def add_yearly_vars(ds, ds_GIS, var_names):
+                data_vars = {}
+                for var in var_names:
+                    yearly_data = []
+                    for year in ds.year.values:
+                        gis_year = ds_GIS.sel(year=int(year))[var]
+                        gis_interp = gis_year.interp(latitude=ds.latitude, longitude=ds.longitude, method="linear")
+                        yearly_data.append(gis_interp)
+                    data_vars[var] = xr.concat(yearly_data, dim="valid_time")
+                return ds.assign(**data_vars).drop_vars("year")
 
-    # ---------------------- Create grid points ----------------------
-    lon = ds_complete.longitude.values
-    lat = ds_complete.latitude.values
-    lon_grid, lat_grid = np.meshgrid(lon, lat, indexing='xy')
-    points = [Point(lon_val, lat_val) for lon_val, lat_val in zip(lon_grid.ravel(), lat_grid.ravel())]
+            # ---------------------- Add GIS variables to dataset ----------------------
+            ds_meteo_missing = add_yearly_vars(ds_meteo_missing, ds_GIS, list(ds_GIS.data_vars))
 
-    # ---------------------- Create spatial mask ----------------------
-    print("Creating spatial mask... this may take a moment")
-    mask = np.array([cells_union.contains(pt) for pt in points])
-    mask_2d = mask.reshape(len(lat), len(lon))
+        # ---------------------- Load Portugal cells GeoPackage ----------------------
+        gdf_cells = gpd.read_file("Data/Portugal_cells.gpkg")
+        if gdf_cells.crs.to_string() != "EPSG:4326":
+            gdf_cells = gdf_cells.to_crs("EPSG:4326")
+        cells_union = gdf_cells.geometry.union_all()
 
-    mask_da = xr.DataArray(
-        mask_2d, 
-        coords=[ds_complete.latitude, ds_complete.longitude],
-        dims=["latitude", "longitude"]
-    )
+        # ---------------------- Create spatial mask ----------------------
+        lon = ds_meteo_missing.longitude.values
+        lat = ds_meteo_missing.latitude.values
+        lon_grid, lat_grid = np.meshgrid(lon, lat, indexing='xy')
+        points = [Point(lon_val, lat_val) for lon_val, lat_val in zip(lon_grid.ravel(), lat_grid.ravel())]
 
-    # ---------------------- Apply mask ----------------------
-    ds_filtered = ds_complete.where(mask_da)
-    print("Dataset filtered by spatial mask")
+        print("Creating spatial mask... this may take a moment")
+        mask = np.array([cells_union.contains(pt) for pt in points])
+        mask_2d = mask.reshape(len(lat), len(lon))
+        mask_da = xr.DataArray(mask_2d, coords=[ds_meteo_missing.latitude, ds_meteo_missing.longitude], dims=["latitude", "longitude"])
+
+        # ---------------------- Apply mask ----------------------
+        ds_filtered_missing = ds_meteo_missing.where(mask_da)
+        print("Dataset filtered by spatial mask")
+
+        # ---------------------- Merge with existing dataset ----------------------
+        if ds_complete is not None:
+            ds_complete = xr.concat([ds_complete, ds_filtered_missing], dim="valid_time")
+            valid_times = pd.Index(ds_complete.valid_time.values)
+            ds_complete = ds_complete.sel(valid_time=~valid_times.duplicated())
+        else:
+            ds_complete = ds_filtered_missing
+
+        # ---------------------- Save updated NetCDF ----------------------
+        ds_complete.to_netcdf(netcdf_path)
+        print(f"Saved/updated FireData NetCDF at {netcdf_path}")
+
+        ds_filtered = ds_complete.sel(valid_time=required_times)
 
     # ---------------------- Calculate cumulative mean per duration ----------------------
     mean_list = []
@@ -121,13 +150,16 @@ def Compile_data(duration, mins_since_fire_start, start_time):
     ds_mean_all = xr.concat(mean_list, dim="duration_hours")
 
     # ---------------------- Convert to DataFrame ----------------------
-    # Converter Dataset para DataFrame
     df_all = ds_mean_all.to_dataframe().reset_index()
+    df_all['s_time'] = start_time
 
-    # Selecionar apenas as colunas de dados (excluindo coordenadas)
-    data_cols = [c for c in df_all.columns if c not in ['latitude', 'longitude', 'duration_hours']]
-
-    # Remover linhas onde **todas as variáveis de dados são NaN**
+    data_cols = [c for c in df_all.columns if c not in ['latitude', 'longitude', 'duration_hours', 's_time']]
     df_all = df_all.dropna(subset=data_cols, how='all')
+
+    df_all = df_all.sort_values(["s_time", "latitude", "longitude", "duration_hours"])[
+        ["s_time", "latitude", "longitude", "duration_hours",
+         "fuel_load", "pct_3_8", "pct_8p", "rh_2m",
+         "wv100_kh", "wdir_950", "FWI_12h", "fstart"]
+    ]
 
     return df_all
