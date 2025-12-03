@@ -8,233 +8,400 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/phosphor-icons"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 
     <style>
+        * {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        }
+
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.573);
+            --glass-border: rgb(255, 255, 255);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+            --text-primary: #1a1a1a;
+            --text-secondary: #555555;
+            --text-muted: #888888;
+            --accent: #e85d04;
+            --accent-light: rgba(232, 93, 4, 0.08);
+        }
+
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #F3F4F6;
+            background: #f5f5f5;
+            color: var(--text-primary);
+            overflow: hidden;
         }
 
-        .glass-panel {
-            background: white;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-            border: 1px solid #E5E7EB;
-        }
-
-        .input-field {
-            transition: all 0.2s;
-        }
-
-        .input-field:focus {
-            border-color: #F97316;
-            ring: 2px solid #F97316;
-            outline: none;
+        /* Fullscreen map */
+        #map {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
         }
 
         .leaflet-container {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
         }
 
+        /* Glass panels */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(32px);
+            -webkit-backdrop-filter: blur(32px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            box-shadow: var(--glass-shadow);
+        }
+
+        /* Form inputs */
+        .input-field {
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            border-radius: 10px;
+            padding: 11px 14px;
+            color: var(--text-primary);
+            font-size: 13px;
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 0 0 3px var(--accent-light);
+        }
+
+        /* Select */
+        .select-field {
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            border-radius: 10px;
+            padding: 11px 32px 11px 14px;
+            color: var(--text-primary);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            appearance: none;
+            width: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+        }
+
+        .select-field:focus {
+            outline: none;
+            border-color: var(--accent);
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* Button */
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 14px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            background: #d45203;
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(232, 93, 4, 0.35);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        /* Labels */
+        .label {
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.01em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .hint {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+        /* Stats */
+        .stat-value {
+            font-size: 22px;
+            font-weight: 500;
+            letter-spacing: -0.02em;
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* Legend */
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .legend-color {
+            width: 24px;
+            height: 10px;
+            border-radius: 3px;
+        }
+
+        .legend-text {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        /* Loader */
         .loader {
-            border-top-color: #F97316;
-            -webkit-animation: spinner 1.5s linear infinite;
-            animation: spinner 1.5s linear infinite;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(0, 0, 0, 0.08);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
         }
 
-        @keyframes spinner {
-            0% {
-                transform: rotate(0deg);
-            }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
 
-            100% {
-                transform: rotate(360deg);
-            }
+        /* Popup styling */
+        .leaflet-popup-content-wrapper {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 14px;
+            box-shadow: var(--glass-shadow);
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        }
+
+        .leaflet-popup-tip {
+            background: var(--glass-bg);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.12);
+            border-radius: 2px;
+        }
+
+        /* Divider */
+        .divider {
+            height: 1px;
+            background: rgba(0, 0, 0, 0.06);
+            margin: 16px 0;
+        }
+
+        /* Status indicator */
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #22c55e;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .status-dot.processing {
+            background: var(--accent);
+        }
+
+        .status-dot.error {
+            background: #ef4444;
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
     </style>
 </head>
 
-<body class="text-slate-700 h-screen flex flex-col overflow-hidden">
+<body class="h-screen">
 
-    <header class="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-8 shrink-0">
-        <div class="flex items-center gap-3">
-            <div class="bg-orange-100 p-2 rounded-lg text-orange-600">
-                <i class="ph-fire-fill text-xl"></i>
-            </div>
-            <div>
-                <h1 class="font-semibold text-slate-800 text-lg tracking-tight">FireROS <span
-                        class="text-slate-400 font-light">Grid Prediction</span></h1>
-            </div>
-            <div class="ml-4 pl-4 border-l border-slate-200">
-                <select id="model-selector"
-                    class="bg-slate-50 border border-slate-200 text-slate-700 text-xs font-medium rounded-lg focus:ring-orange-500 focus:border-orange-500 block w-full p-2">
-                    <option value="complex" selected>Complex Model</option>
-                    <option value="linear">Linear Model</option>
-                </select>
-            </div>
-        </div>
-        <div class="flex items-center gap-4">
-            <span
-                class="text-xs font-medium text-green-600 bg-green-50 px-3 py-1 rounded-full border border-green-100">●
-                System Operational</span>
-            <div class="h-8 w-8 bg-slate-200 rounded-full flex items-center justify-center text-slate-500 text-sm">JD
-            </div>
-        </div>
-    </header>
+    <!-- Fullscreen Map -->
+    <div id="map"></div>
 
-    <main class="flex-1 grid grid-cols-12 gap-6 p-6 overflow-hidden">
-
-        <div class="col-span-4 flex flex-col gap-6 h-full overflow-hidden">
-
-            <!-- DateTime Selector -->
-            <div class="glass-panel rounded-xl p-4 shrink-0">
-                <label class="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">Fire Event Date/Time</label>
-                <input type="datetime-local" id="datetime-input"
-                    class="input-field w-full bg-slate-50 border border-slate-200 rounded-md px-3 py-2 text-sm text-slate-700"
-                    required>
-                <p class="text-xs text-slate-400 mt-2">⚠️ Required for ERA5 weather data</p>
-            </div>
-
-            <!-- Duration Input -->
-            <div class="glass-panel rounded-xl p-4 shrink-0">
-                <label class="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">Prediction Duration (hours)</label>
-                <input type="number" id="duration-input" value="1" min="1" max="24" step="1"
-                    class="input-field w-full bg-slate-50 border border-slate-200 rounded-md px-3 py-2 text-sm text-slate-700">
-                <p class="text-xs text-slate-400 mt-2">How far ahead to predict (default: 1 hr)</p>
-            </div>
-
-            <!-- Optional f_start Input -->
-            <div class="glass-panel rounded-xl p-4 shrink-0">
-                <label class="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">Time, in minutes, since fire started</label>
-                <input type="number" id="f-start-input" value="0" step="0.1"
-                    class="input-field w-full bg-slate-50 border border-slate-200 rounded-md px-3 py-2 text-sm text-slate-700">
-                <p class="text-xs text-slate-400 mt-2">Default: 0 (leave as-is unless you need to adjust)</p>
-            </div>
-
-            <!-- Instructions -->
-            <div class="glass-panel rounded-xl flex-1 overflow-y-auto p-6">
-                <h3 class="text-sm font-semibold text-slate-900 mb-4 uppercase tracking-wider">Instructions</h3>
-
-                <div class="space-y-4">
-                    <div class="flex items-start gap-3">
-                        <div class="bg-orange-100 text-orange-600 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shrink-0">1</div>
-                        <div>
-                            <p class="text-sm font-medium text-slate-800">Select Fire Event Date & Time</p>
-                            <p class="text-xs text-slate-500 mt-1">Enter the fire event date and time (2015-2025)</p>
-                        </div>
+    <!-- Floating Sidebar -->
+    <aside class="fixed top-4 left-4 bottom-4 z-[1000] w-72">
+        <div class="glass h-full p-5 flex flex-col">
+            
+            <!-- Logo & Status -->
+            <div class="flex items-center justify-between mb-5">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/20">
+                        <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
+                        </svg>
                     </div>
-
-                    <div class="flex items-start gap-3">
-                        <div class="bg-orange-100 text-orange-600 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shrink-0">2</div>
-                        <div>
-                            <p class="text-sm font-medium text-slate-800">Set Prediction Duration</p>
-                            <p class="text-xs text-slate-500 mt-1">How many minutes ahead to predict fire spread</p>
-                        </div>
-                    </div>
-
-                    <div class="flex items-start gap-3">
-                        <div class="bg-orange-100 text-orange-600 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shrink-0">3</div>
-                        <div>
-                            <p class="text-sm font-medium text-slate-800">(Optional) Adjust Fire Start Parameter</p>
-                            <p class="text-xs text-slate-500 mt-1">Default is 0. Modify only if needed.</p>
-                        </div>
-                    </div>
-
-                    <div class="flex items-start gap-3">
-                        <div class="bg-orange-100 text-orange-600 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shrink-0">4</div>
-                        <div>
-                            <p class="text-sm font-medium text-slate-800">Run Grid Prediction</p>
-                            <p class="text-xs text-slate-500 mt-1">Click "Run Grid Prediction" to analyze all of Portugal</p>
-                        </div>
+                    <div>
+                        <h1 class="text-base font-semibold text-gray-800 tracking-tight">FireROS</h1>
+                        <p class="text-[11px] text-gray-500">Grid Prediction</p>
                     </div>
                 </div>
-
-                <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <p class="text-xs font-semibold text-blue-900 mb-2">ℹ️ Automatic Grid-Based Analysis</p>
-                    <p class="text-xs text-blue-700">The system will automatically fetch weather, fuel load, and burned area data for every 0.1° grid cell across Portugal and run predictions!</p>
+                <div class="flex items-center gap-2 bg-white/50 px-3 py-1.5 rounded-full">
+                    <div class="status-dot" id="status-dot"></div>
+                    <span class="text-[11px] font-medium text-gray-600" id="grid-status">Ready</span>
                 </div>
             </div>
 
-            <button onclick="runGridPrediction()"
-                class="shrink-0 bg-slate-900 hover:bg-orange-600 text-white h-14 rounded-xl font-medium text-lg shadow-lg shadow-orange-500/20 transition-all flex items-center justify-center gap-2">
-                <i class="ph-trend-up"></i> Run Grid Prediction
+            <div class="divider"></div>
+
+            <!-- Form Fields -->
+            <div class="flex-1 space-y-4 overflow-y-auto">
+                
+                <!-- Model -->
+                <div>
+                    <label class="label">Model</label>
+                    <select id="model-selector" class="select-field">
+                        <option value="complex" selected>Complex Model</option>
+                        <option value="linear">Linear Model</option>
+                    </select>
+                </div>
+
+                <!-- DateTime -->
+                <div>
+                    <label class="label">Date & Time</label>
+                    <input type="datetime-local" id="datetime-input" class="input-field" required>
+                    <p class="hint">Fire event timestamp (2015–2025)</p>
+                </div>
+
+                <!-- Duration -->
+                <div>
+                    <label class="label">Duration (hours)</label>
+                    <input type="number" id="duration-input" value="1" min="1" max="24" step="1" class="input-field">
+                </div>
+
+                <!-- f_start -->
+                <div>
+                    <label class="label">Time Since Start (min)</label>
+                    <input type="number" id="f-start-input" value="0" step="0.1" class="input-field">
+                </div>
+
+                <div class="divider"></div>
+
+                <!-- Instructions -->
+                <div>
+                    <div class="label mb-3">Instructions</div>
+                    <div class="space-y-3">
+                        <div class="flex gap-3">
+                            <span class="text-[11px] font-semibold text-orange-500">1</span>
+                            <p class="text-[11px] text-gray-600 leading-relaxed">Select fire event date & time (2015–2025)</p>
+                        </div>
+                        <div class="flex gap-3">
+                            <span class="text-[11px] font-semibold text-orange-500">2</span>
+                            <p class="text-[11px] text-gray-600 leading-relaxed">Set prediction duration in hours</p>
+                        </div>
+                        <div class="flex gap-3">
+                            <span class="text-[11px] font-semibold text-orange-500">3</span>
+                            <p class="text-[11px] text-gray-600 leading-relaxed">Adjust fire start time if needed (optional)</p>
+                        </div>
+                        <div class="flex gap-3">
+                            <span class="text-[11px] font-semibold text-orange-500">4</span>
+                            <p class="text-[11px] text-gray-600 leading-relaxed">Run prediction to analyze all grid cells</p>
+                        </div>
+                    </div>
+                    <p class="text-[10px] text-gray-400 mt-3 leading-relaxed">Weather, fuel load, and burned area data is automatically fetched for every 0.1° cell across Portugal.</p>
+                </div>
+
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- Legend -->
+            <div class="mb-4">
+                <div class="label mb-3">Rate of Spread (m/hr)</div>
+                <div id="legend-items" class="space-y-2">
+                    <p class="text-[11px] text-gray-400 italic">Run prediction to see legend</p>
+                </div>
+            </div>
+
+            <!-- Run Button -->
+            <button onclick="runGridPrediction()" class="btn-primary">
+                Run Prediction
             </button>
         </div>
+    </aside>
 
-        <div class="col-span-8 flex flex-col gap-6 h-full">
-
-            <div class="glass-panel rounded-xl flex-1 relative overflow-hidden group">
-                <div id="map" class="w-full h-full z-0"></div>
-
-                <div class="absolute top-4 right-4 z-[400] bg-white/90 backdrop-blur rounded-lg shadow-sm p-3">
-                    <div class="text-xs font-semibold text-slate-500 mb-1">Grid Status</div>
-                    <div class="text-sm text-slate-800" id="grid-status">Ready...</div>
+    <!-- Bottom Results Bar -->
+    <div class="fixed bottom-4 left-1/2 -translate-x-1/4 z-[1000]">
+        <div class="glass px-6 py-4">
+            <div class="flex items-center gap-8">
+                <div class="text-center">
+                    <div class="stat-value text-gray-700" id="total-cells">—</div>
+                    <div class="stat-label">Cells</div>
                 </div>
-
-                <!-- Dynamic Legend -->
-                <div id="legend-container" class="absolute bottom-4 right-4 z-[400] bg-white/90 backdrop-blur rounded-lg shadow-sm p-3">
-                    <div class="text-xs font-semibold text-slate-700 mb-2">Rate of Spread (m/hour)</div>
-                    <div id="legend-items" class="space-y-1">
-                        <p class="text-xs text-slate-500 italic">Run prediction to see legend</p>
-                    </div>
+                <div class="w-px h-10 bg-black/5"></div>
+                <div class="text-center">
+                    <div class="stat-value text-emerald-600" id="successful-cells">—</div>
+                    <div class="stat-label">Success</div>
                 </div>
-            </div>
-
-            <!-- Stats Panel -->
-            <div class="glass-panel rounded-xl p-6 shrink-0">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Total Cells</h4>
-                        <div id="total-cells">
-                            <span class="text-3xl font-bold text-slate-800">--</span>
-                        </div>
-                    </div>
-                    <div>
-                        <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Successful</h4>
-                        <div id="successful-cells">
-                            <span class="text-3xl font-bold text-green-600">--</span>
-                        </div>
-                    </div>
-                    <div class="bg-slate-900 rounded-xl px-6 py-4">
-                        <h4 class="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">Avg ROS</h4>
-                        <div class="flex items-baseline gap-1">
-                            <span id="avg-ros-output" class="text-3xl font-bold text-white tracking-tight">--</span>
-                            <span class="text-xs text-slate-400 font-medium">m/hour</span>
-                        </div>
-                    </div>
-                    <div>
-                        <h4 class="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">Max ROS</h4>
-                        <div class="flex items-baseline gap-1">
-                            <span id="max-ros-output" class="text-lg font-semibold text-slate-300">--</span>
-                            <span class="text-xs text-slate-500">m/hour</span>
-                        </div>
-                    </div>
+                <div class="w-px h-10 bg-black/5"></div>
+                <div class="text-center">
+                    <div class="stat-value text-orange-600" id="avg-ros-output">—</div>
+                    <div class="stat-label">Avg m/hr</div>
+                </div>
+                <div class="w-px h-10 bg-black/5"></div>
+                <div class="text-center">
+                    <div class="stat-value text-red-500" id="max-ros-output">—</div>
+                    <div class="stat-label">Max m/hr</div>
                 </div>
             </div>
         </div>
-    </main>
+    </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
-        // --- 1. MAP INITIALIZATION ---
-        const map = L.map('map').setView([39.4871, -8.0801], 7);
+        // --- MAP INITIALIZATION ---
+        const map = L.map('map', {
+            zoomControl: false
+        }).setView([39.4871, -8.0801], 7);
+
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
 
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
             subdomains: 'abcd',
             maxZoom: 19
         }).addTo(map);
 
         const API_BASE_URL = 'http://localhost:5050/api';
 
-        // Store grid layer and current class breaks
         let gridLayer = null;
         let currentClassBreaks = [];
-        const classColors = ['#1a9850', '#91cf60', '#d9ef8b', '#fee08b', '#fc8d59', '#d73027'];
+        const classColors = ['#22c55e', '#84cc16', '#eab308', '#f97316', '#ef4444', '#dc2626'];
 
-        // --- 2. DYNAMIC CLASS CALCULATION (Quantile-based breaks) ---
         function calculateClassBreaks(values, numClasses = 6) {
             if (values.length === 0) return [];
             
@@ -242,12 +409,10 @@
             const min = sorted[0];
             const max = sorted[sorted.length - 1];
             
-            // If all values are the same, return single class
             if (min === max) {
                 return [{ min: min, max: max, color: classColors[2] }];
             }
             
-            // Calculate quantile-based breaks
             const breaks = [];
             for (let i = 0; i <= numClasses; i++) {
                 const percentile = i / numClasses;
@@ -255,7 +420,6 @@
                 breaks.push(sorted[index]);
             }
             
-            // Remove duplicates and create class ranges
             const uniqueBreaks = [...new Set(breaks)];
             const classes = [];
             
@@ -270,7 +434,6 @@
             return classes;
         }
 
-        // --- 3. GET COLOR BASED ON DYNAMIC CLASSES ---
         function getColorForROS(ros, classBreaks) {
             if (classBreaks.length === 0) return '#cccccc';
             
@@ -282,27 +445,20 @@
             return classBreaks[classBreaks.length - 1].color;
         }
 
-        // --- 4. UPDATE LEGEND ---
         function updateLegend(classBreaks) {
             const legendItems = document.getElementById('legend-items');
             
             if (classBreaks.length === 0) {
-                legendItems.innerHTML = '<p class="text-xs text-slate-500 italic">No data available</p>';
+                legendItems.innerHTML = '<p class="text-[11px] text-gray-400 italic">No data</p>';
                 return;
             }
             
             let html = '';
-            classBreaks.forEach((cls, index) => {
-                const minLabel = cls.min.toFixed(0);
-                const maxLabel = cls.max.toFixed(0);
-                const label = index === classBreaks.length - 1 
-                    ? `${minLabel} - ${maxLabel}`
-                    : `${minLabel} - ${maxLabel}`;
-                
+            classBreaks.forEach((cls) => {
                 html += `
-                    <div class="flex gap-2 items-center">
-                        <div class="w-8 h-4 rounded-sm" style="background: ${cls.color}"></div>
-                        <span class="text-xs text-slate-600">${label}</span>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: ${cls.color}"></div>
+                        <span class="legend-text">${cls.min.toFixed(0)} – ${cls.max.toFixed(0)}</span>
                     </div>
                 `;
             });
@@ -310,31 +466,40 @@
             legendItems.innerHTML = html;
         }
 
-        // --- 5. RUN GRID PREDICTION ---
+        function setStatus(status) {
+            const statusText = document.getElementById('grid-status');
+            const statusDot = document.getElementById('status-dot');
+            
+            statusText.innerText = status;
+            statusDot.classList.remove('processing', 'error');
+            
+            if (status === 'Processing...') {
+                statusDot.classList.add('processing');
+            } else if (status === 'Error') {
+                statusDot.classList.add('error');
+            }
+        }
+
         async function runGridPrediction() {
-            const datetimeInput = document.getElementById('datetime-input');
-            const datetimeValue = datetimeInput.value;
+            const datetimeValue = document.getElementById('datetime-input').value;
             const fStartValue = parseFloat(document.getElementById('f-start-input').value) || 0;
             const durationValue = parseInt(document.getElementById('duration-input').value) || 1;
             const modelType = document.getElementById('model-selector').value;
 
             if (!datetimeValue) {
-                alert('Please select a date/time before running prediction!');
+                alert('Please select a date and time.');
                 return;
             }
 
-            // Convert datetime-local format to API format (YYYY-MM-DD HH:MM)
             const datetime = datetimeValue.replace('T', ' ');
 
-            // Update UI to loading state
-            document.getElementById('grid-status').innerText = 'Running predictions...';
-            document.getElementById('total-cells').innerHTML = '<div class="loader ease-linear rounded-full border-2 border-t-2 border-gray-200 h-8 w-8"></div>';
-            document.getElementById('successful-cells').innerHTML = '<div class="loader ease-linear rounded-full border-2 border-t-2 border-gray-200 h-8 w-8"></div>';
+            setStatus('Processing...');
+            document.getElementById('total-cells').innerHTML = '<div class="loader"></div>';
+            document.getElementById('successful-cells').innerHTML = '<div class="loader"></div>';
             document.getElementById('avg-ros-output').innerText = '...';
             document.getElementById('max-ros-output').innerText = '...';
-            document.getElementById('legend-items').innerHTML = '<p class="text-xs text-slate-500 italic">Loading...</p>';
+            document.getElementById('legend-items').innerHTML = '<p class="text-[11px] text-gray-400 italic">Loading...</p>';
 
-            // Clear existing grid layer
             if (gridLayer) {
                 map.removeLayer(gridLayer);
             }
@@ -342,9 +507,7 @@
             try {
                 const response = await fetch(`${API_BASE_URL}/predict-grid`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         datetime: datetime,
                         model: modelType,
@@ -360,14 +523,11 @@
                     const totalCells = data.total_cells;
                     const successfulCells = data.successful_cells;
 
-                    // Update stats
-                    document.getElementById('grid-status').innerText = `${successfulCells} / ${totalCells} cells`;
-                    document.getElementById('total-cells').innerHTML = `<span class="text-3xl font-bold text-slate-800">${totalCells}</span>`;
-                    document.getElementById('successful-cells').innerHTML = `<span class="text-3xl font-bold text-green-600">${successfulCells}</span>`;
+                    setStatus('Complete');
+                    document.getElementById('total-cells').innerHTML = totalCells;
+                    document.getElementById('successful-cells').innerHTML = successfulCells;
 
-                    // Calculate stats
                     if (predictions.length > 0) {
-                        // Convert m/min to m/hour (multiply by 60)
                         const rosValuesHour = predictions.map(p => p.prediction * 60);
                         const avgRos = rosValuesHour.reduce((a, b) => a + b, 0) / rosValuesHour.length;
                         const maxRos = Math.max(...rosValuesHour);
@@ -375,20 +535,17 @@
                         document.getElementById('avg-ros-output').innerText = avgRos.toFixed(1);
                         document.getElementById('max-ros-output').innerText = maxRos.toFixed(1);
 
-                        // Calculate dynamic class breaks based on data
                         currentClassBreaks = calculateClassBreaks(rosValuesHour, 6);
                         updateLegend(currentClassBreaks);
 
-                        // Draw grid on map
                         const rectangles = [];
                         predictions.forEach(pred => {
                             const lat = pred.lat;
                             const lon = pred.lon;
-                            const rosHour = pred.prediction * 60; // Convert to m/hour
-                            const errorHour = pred.error_estimate * 60; // Convert error too
+                            const rosHour = pred.prediction * 60;
+                            const errorHour = pred.error_estimate * 60;
                             const color = getColorForROS(rosHour, currentClassBreaks);
 
-                            // Create rectangle for 0.1° cell
                             const bounds = [
                                 [lat - 0.05, lon - 0.05],
                                 [lat + 0.05, lon + 0.05]
@@ -398,43 +555,44 @@
                                 color: color,
                                 fillColor: color,
                                 fillOpacity: 0.6,
-                                weight: 1
+                                weight: 0.5
                             }).bindPopup(`
-                                <strong>ROS Prediction</strong><br>
-                                Lat: ${lat.toFixed(4)}<br>
-                                Lon: ${lon.toFixed(4)}<br>
-                                ROS: ${rosHour.toFixed(1)} m/hour<br>
-                                Error: ±${errorHour.toFixed(1)} m/hour
+                                <div style="font-family: Helvetica, sans-serif; font-size: 12px;">
+                                    <div style="font-weight: 600; margin-bottom: 6px; color: #1a1a1a;">Prediction</div>
+                                    <div style="color: #666; line-height: 1.6;">
+                                        <div>Lat: ${lat.toFixed(4)}</div>
+                                        <div>Lon: ${lon.toFixed(4)}</div>
+                                        <div style="color: #e85d04; font-weight: 600;">ROS: ${rosHour.toFixed(1)} m/hr</div>
+                                        <div>Error: ±${errorHour.toFixed(1)}</div>
+                                    </div>
+                                </div>
                             `);
 
                             rectangles.push(rect);
                         });
 
-                        // Create layer group
                         gridLayer = L.layerGroup(rectangles).addTo(map);
-
-                        document.getElementById('grid-status').innerText = `Predictions complete!`;
                     } else {
-                        document.getElementById('avg-ros-output').innerText = 'N/A';
-                        document.getElementById('max-ros-output').innerText = 'N/A';
-                        document.getElementById('grid-status').innerText = 'No valid predictions';
+                        document.getElementById('avg-ros-output').innerText = '—';
+                        document.getElementById('max-ros-output').innerText = '—';
+                        setStatus('No data');
                         updateLegend([]);
-                        alert('No valid predictions were generated. Check if data is available for this date.');
+                        alert('No valid predictions. Check data availability.');
                     }
 
                 } else {
-                    throw new Error(data.error || 'Prediction failed');
+                    throw new Error(data.error || 'Failed');
                 }
 
             } catch (error) {
-                console.error('Error running grid prediction:', error);
-                document.getElementById('grid-status').innerText = 'Error occurred';
-                document.getElementById('total-cells').innerHTML = '<span class="text-red-500 text-sm">ERR</span>';
-                document.getElementById('successful-cells').innerHTML = '<span class="text-red-500 text-sm">ERR</span>';
-                document.getElementById('avg-ros-output').innerText = 'ERR';
-                document.getElementById('max-ros-output').innerText = 'ERR';
+                console.error('Error:', error);
+                setStatus('Error');
+                document.getElementById('total-cells').innerHTML = '—';
+                document.getElementById('successful-cells').innerHTML = '—';
+                document.getElementById('avg-ros-output').innerText = '—';
+                document.getElementById('max-ros-output').innerText = '—';
                 updateLegend([]);
-                alert('Error running grid prediction: ' + error.message);
+                alert('Error: ' + error.message);
             }
         }
     </script>

@@ -8,6 +8,7 @@ import rasterio
 from rasterio.transform import from_origin
 import matplotlib.pyplot as plt
 import numpy as np
+import geopandas as gpd
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for frontend communication
@@ -28,12 +29,27 @@ def predict_grid():
         # Get data from request
         data = request.get_json()
         datetime_str = data.get('datetime')
+
         model_type = data.get('model', 'complex')
+
         mins_since_fire_start = data.get('f_start', 0)
+
         duration = data.get('duration_p', 1)
         
         # Parse and round start time
         start_time = pd.to_datetime(datetime_str)
+
+        # constrangimento de datas:
+        MIN_DATE = pd.Timestamp('2015-01-01')
+        MAX_DATE = pd.Timestamp('2025-12-31')
+
+        if not (MIN_DATE <= start_time <= MAX_DATE):
+            return jsonify({
+                'success': False,
+                'error': 'Date must be between Janurary 1st of 2015 and 2 weeks before the present time.'
+            }), 400
+
+
         start_time = start_time.round('30min')
 
         ######## inicio do notebook do rafa #########
@@ -98,6 +114,26 @@ def predict_grid():
         # ------------------- Limpar model_inputs -------------------
         # Remover linhas onde **todas essas colunas** são NaN
         model_inputs = model_inputs.dropna(subset=cols_to_check, how='all')
+
+        # ------------------- Filtrar apenas células de Portugal -------------------
+        portugal_cells = gpd.read_file('backend/utils/Data/Portugal_cells.gpkg')
+        
+        # Reproject to WGS84 (EPSG:4326) to match model_inputs
+        portugal_cells = portugal_cells.to_crs('EPSG:4326')
+        
+        # Get valid coordinates from Portugal cells centroids (0.1° grid)
+        centroids = portugal_cells.geometry.centroid
+        valid_coords = set(zip(
+            centroids.y.round(1),
+            centroids.x.round(1)
+        ))
+        
+        # Filter model_inputs by matching coordinates
+        mask = [
+            (round(lat, 1), round(lon, 1)) in valid_coords
+            for lat, lon in zip(model_inputs['latitude'], model_inputs['longitude'])
+        ]
+        model_inputs = model_inputs[mask]
         
         # Select prediction column based on model type
         pred_col = 'predictions' if model_type == 'complex' else 'linear_pred'
