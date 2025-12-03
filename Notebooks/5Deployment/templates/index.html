@@ -96,6 +96,14 @@
                 <p class="text-xs text-slate-400 mt-2">⚠️ Required for ERA5 weather data</p>
             </div>
 
+            <!-- Duration Input -->
+            <div class="glass-panel rounded-xl p-4 shrink-0">
+                <label class="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">Prediction Duration (hours)</label>
+                <input type="number" id="duration-input" value="1" min="1" max="24" step="1"
+                    class="input-field w-full bg-slate-50 border border-slate-200 rounded-md px-3 py-2 text-sm text-slate-700">
+                <p class="text-xs text-slate-400 mt-2">How far ahead to predict (default: 1 hr)</p>
+            </div>
+
             <!-- Optional f_start Input -->
             <div class="glass-panel rounded-xl p-4 shrink-0">
                 <label class="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">Time, in minutes, since fire started</label>
@@ -120,13 +128,21 @@
                     <div class="flex items-start gap-3">
                         <div class="bg-orange-100 text-orange-600 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shrink-0">2</div>
                         <div>
+                            <p class="text-sm font-medium text-slate-800">Set Prediction Duration</p>
+                            <p class="text-xs text-slate-500 mt-1">How many minutes ahead to predict fire spread</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="bg-orange-100 text-orange-600 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shrink-0">3</div>
+                        <div>
                             <p class="text-sm font-medium text-slate-800">(Optional) Adjust Fire Start Parameter</p>
                             <p class="text-xs text-slate-500 mt-1">Default is 0. Modify only if needed.</p>
                         </div>
                     </div>
 
                     <div class="flex items-start gap-3">
-                        <div class="bg-orange-100 text-orange-600 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shrink-0">3</div>
+                        <div class="bg-orange-100 text-orange-600 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shrink-0">4</div>
                         <div>
                             <p class="text-sm font-medium text-slate-800">Run Grid Prediction</p>
                             <p class="text-xs text-slate-500 mt-1">Click "Run Grid Prediction" to analyze all of Portugal</p>
@@ -161,67 +177,52 @@
                     <div class="text-xs font-semibold text-slate-700 mb-2">Rate of Spread (m/min)</div>
                     <div class="flex gap-1 items-center">
                         <div class="w-8 h-4" style="background: #1a9850"></div>
-                        <span class="text-xs text-slate-600">Low</span>
+                        <span class="text-xs text-slate-600">Low (&lt;2)</span>
                     </div>
                     <div class="flex gap-1 items-center">
                         <div class="w-8 h-4" style="background: #91cf60"></div>
-                        <span class="text-xs text-slate-600">0-2</span>
+                        <span class="text-xs text-slate-600">Moderate (2-5)</span>
                     </div>
                     <div class="flex gap-1 items-center">
                         <div class="w-8 h-4" style="background: #fee08b"></div>
-                        <span class="text-xs text-slate-600">2-5</span>
+                        <span class="text-xs text-slate-600">High (5-10)</span>
                     </div>
                     <div class="flex gap-1 items-center">
                         <div class="w-8 h-4" style="background: #fc8d59"></div>
-                        <span class="text-xs text-slate-600">5-10</span>
+                        <span class="text-xs text-slate-600">Very High (10-15)</span>
                     </div>
                     <div class="flex gap-1 items-center">
                         <div class="w-8 h-4" style="background: #d73027"></div>
-                        <span class="text-xs text-slate-600">High (&gt;10)</span>
+                        <span class="text-xs text-slate-600">Extreme (&gt;15)</span>
                     </div>
                 </div>
             </div>
 
-            <div class="h-40 grid grid-cols-3 gap-6 shrink-0">
-
-                <div class="glass-panel rounded-xl p-5 relative overflow-hidden">
-                    <div class="flex justify-between items-start mb-2">
-                        <h4 class="text-xs font-bold text-slate-400 uppercase">Total Cells</h4>
-                        <i class="ph-grid-four text-slate-300 text-xl"></i>
+            <!-- Stats Panel -->
+            <div class="glass-panel rounded-xl p-6 shrink-0">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Total Cells</h4>
+                        <div id="total-cells">
+                            <span class="text-3xl font-bold text-slate-800">--</span>
+                        </div>
                     </div>
-                    <div id="total-cells" class="mt-2">
-                        <span class="text-3xl font-bold text-slate-800">--</span>
+                    <div>
+                        <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Successful</h4>
+                        <div id="successful-cells">
+                            <span class="text-3xl font-bold text-green-600">--</span>
+                        </div>
                     </div>
-                </div>
-
-                <div class="glass-panel rounded-xl p-5 relative overflow-hidden">
-                    <div class="flex justify-between items-start mb-2">
-                        <h4 class="text-xs font-bold text-slate-400 uppercase">Successful</h4>
-                        <i class="ph-check-circle text-slate-300 text-xl"></i>
-                    </div>
-                    <div id="successful-cells" class="mt-2">
-                        <span class="text-3xl font-bold text-green-600">--</span>
-                    </div>
-                </div>
-
-                <div
-                    class="bg-slate-800 rounded-xl p-4 text-white relative overflow-hidden flex flex-col justify-center items-center gap-3">
-                    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 to-red-600"></div>
-
-                    <div class="text-center">
-                        <h4 class="text-xs font-bold text-slate-400 uppercase">Avg. Rate of Spread</h4>
-                        <div class="flex items-baseline justify-center gap-1">
+                    <div class="bg-slate-900 rounded-xl px-6 py-4">
+                        <h4 class="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">Avg ROS</h4>
+                        <div class="flex items-baseline gap-1">
                             <span id="avg-ros-output" class="text-3xl font-bold text-white tracking-tight">--</span>
                             <span class="text-xs text-slate-400 font-medium">m/min</span>
                         </div>
                     </div>
-
-                    <div class="w-24 h-px bg-slate-700/50"></div>
-
-                    <div class="text-center">
-                        <h4 class="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">Max ROS
-                        </h4>
-                        <div class="flex items-baseline justify-center gap-1">
+                    <div>
+                        <h4 class="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">Max ROS</h4>
+                        <div class="flex items-baseline gap-1">
                             <span id="max-ros-output" class="text-lg font-semibold text-slate-300">--</span>
                             <span class="text-xs text-slate-500">m/min</span>
                         </div>
@@ -262,6 +263,7 @@
             const datetimeInput = document.getElementById('datetime-input');
             const datetimeValue = datetimeInput.value;
             const fStartValue = parseFloat(document.getElementById('f-start-input').value) || 0;
+            const durationValue = parseInt(document.getElementById('duration-input').value) || 60;
             const modelType = document.getElementById('model-selector').value;
 
             if (!datetimeValue) {
@@ -294,7 +296,7 @@
                         datetime: datetime,
                         model: modelType,
                         f_start: fStartValue,
-                        duration_p: 60  // Always 60 minutes
+                        duration_p: durationValue
                     })
                 });
 
