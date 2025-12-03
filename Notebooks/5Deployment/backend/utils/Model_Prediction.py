@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import pickle
 import os
-import Create_inputs 
+from . import Create_inputs
 import importlib
 importlib.reload(Create_inputs)
 
@@ -19,7 +19,7 @@ def calculate_and_append_master(start_time, duration, mins_since_fire_start, mas
     model_inputs['fstart'] = mins_since_fire_start
 
     # ------------------- Previsões XGBoost -------------------
-    with open(r'..\..\..\..\Data\Models\XGBoost.pkl', 'rb') as f:
+    with open(r'../../Data/Models/XGBoost.pkl', 'rb') as f:
         model = pickle.load(f)
 
     rename_dict = {
@@ -42,7 +42,7 @@ def calculate_and_append_master(start_time, duration, mins_since_fire_start, mas
     X = X[model.get_booster().feature_names]
     predictions = model.predict(X)
     model_inputs['predictions'] = predictions
-    model_inputs['linear_pred'] = np.exp(predictions)
+    model_inputs['linear_pred'] = 10**(predictions / 5) - 1
     model_inputs = model_inputs.sort_values(by=["duration_hours", "latitude", "longitude"])
 
     # ------------------- Transformar em xarray -------------------

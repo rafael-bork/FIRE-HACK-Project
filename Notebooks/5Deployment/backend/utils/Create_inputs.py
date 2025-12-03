@@ -17,7 +17,7 @@ from shapely.geometry import Point
 import geopandas as gpd
 import importlib
 
-import Meteo_dataset
+from . import Meteo_dataset
 importlib.reload(Meteo_dataset)
 
 
@@ -81,7 +81,7 @@ def Compile_data(duration, mins_since_fire_start, start_time):
         ds_meteo_missing = Meteo_dataset.assemble_meteorological_data(missing_times)
 
         # ---------------------- Open GIS dataset ----------------------
-        with xr.open_dataset("Data/GIS_data.nc") as ds_GIS:
+        with xr.open_dataset("backend/utils/Data/GIS_data.nc") as ds_GIS:
             ds_GIS = ds_GIS.rename({"lat": "latitude", "lon": "longitude"})
 
             # ---------------------- Extract year coordinate ----------------------
@@ -105,7 +105,7 @@ def Compile_data(duration, mins_since_fire_start, start_time):
             ds_meteo_missing = add_yearly_vars(ds_meteo_missing, ds_GIS, list(ds_GIS.data_vars))
 
         # ---------------------- Load Portugal cells GeoPackage ----------------------
-        gdf_cells = gpd.read_file("Data/Portugal_cells.gpkg")
+        gdf_cells = gpd.read_file("backend/utils/Data/Portugal_cells.gpkg")
         if gdf_cells.crs.to_string() != "EPSG:4326":
             gdf_cells = gdf_cells.to_crs("EPSG:4326")
         cells_union = gdf_cells.geometry.union_all()
@@ -152,6 +152,7 @@ def Compile_data(duration, mins_since_fire_start, start_time):
     # ---------------------- Convert to DataFrame ----------------------
     df_all = ds_mean_all.to_dataframe().reset_index()
     df_all['s_time'] = start_time
+    df_all['fstart'] = mins_since_fire_start
 
     data_cols = [c for c in df_all.columns if c not in ['latitude', 'longitude', 'duration_hours', 's_time']]
     df_all = df_all.dropna(subset=data_cols, how='all')

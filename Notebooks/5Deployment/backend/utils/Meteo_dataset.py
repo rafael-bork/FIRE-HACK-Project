@@ -15,8 +15,7 @@ import os
 import glob
 
 
-import CDS_API
-import Meteo_vars
+from . import CDS_API, Meteo_vars
 
 # Reload modules in case of updates
 importlib.reload(CDS_API)

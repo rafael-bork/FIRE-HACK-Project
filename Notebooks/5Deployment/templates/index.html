@@ -172,28 +172,11 @@
                     <div class="text-sm text-slate-800" id="grid-status">Ready...</div>
                 </div>
 
-                <!-- Legend -->
-                <div class="absolute bottom-4 right-4 z-[400] bg-white/90 backdrop-blur rounded-lg shadow-sm p-3">
-                    <div class="text-xs font-semibold text-slate-700 mb-2">Rate of Spread (m/min)</div>
-                    <div class="flex gap-1 items-center">
-                        <div class="w-8 h-4" style="background: #1a9850"></div>
-                        <span class="text-xs text-slate-600">Low (&lt;2)</span>
-                    </div>
-                    <div class="flex gap-1 items-center">
-                        <div class="w-8 h-4" style="background: #91cf60"></div>
-                        <span class="text-xs text-slate-600">Moderate (2-5)</span>
-                    </div>
-                    <div class="flex gap-1 items-center">
-                        <div class="w-8 h-4" style="background: #fee08b"></div>
-                        <span class="text-xs text-slate-600">High (5-10)</span>
-                    </div>
-                    <div class="flex gap-1 items-center">
-                        <div class="w-8 h-4" style="background: #fc8d59"></div>
-                        <span class="text-xs text-slate-600">Very High (10-15)</span>
-                    </div>
-                    <div class="flex gap-1 items-center">
-                        <div class="w-8 h-4" style="background: #d73027"></div>
-                        <span class="text-xs text-slate-600">Extreme (&gt;15)</span>
+                <!-- Dynamic Legend -->
+                <div id="legend-container" class="absolute bottom-4 right-4 z-[400] bg-white/90 backdrop-blur rounded-lg shadow-sm p-3">
+                    <div class="text-xs font-semibold text-slate-700 mb-2">Rate of Spread (m/hour)</div>
+                    <div id="legend-items" class="space-y-1">
+                        <p class="text-xs text-slate-500 italic">Run prediction to see legend</p>
                     </div>
                 </div>
             </div>
@@ -217,14 +200,14 @@
                         <h4 class="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">Avg ROS</h4>
                         <div class="flex items-baseline gap-1">
                             <span id="avg-ros-output" class="text-3xl font-bold text-white tracking-tight">--</span>
-                            <span class="text-xs text-slate-400 font-medium">m/min</span>
+                            <span class="text-xs text-slate-400 font-medium">m/hour</span>
                         </div>
                     </div>
                     <div>
                         <h4 class="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">Max ROS</h4>
                         <div class="flex items-baseline gap-1">
                             <span id="max-ros-output" class="text-lg font-semibold text-slate-300">--</span>
-                            <span class="text-xs text-slate-500">m/min</span>
+                            <span class="text-xs text-slate-500">m/hour</span>
                         </div>
                     </div>
                 </div>
@@ -246,24 +229,93 @@
 
         const API_BASE_URL = 'http://localhost:5050/api';
 
-        // Store grid layer
+        // Store grid layer and current class breaks
         let gridLayer = null;
+        let currentClassBreaks = [];
+        const classColors = ['#1a9850', '#91cf60', '#d9ef8b', '#fee08b', '#fc8d59', '#d73027'];
 
-        // --- 2. COLOR SCALE FOR PREDICTIONS ---
-        function getColorForROS(ros) {
-            if (ros < 2) return '#1a9850';
-            if (ros < 5) return '#91cf60';
-            if (ros < 10) return '#fee08b';
-            if (ros < 15) return '#fc8d59';
-            return '#d73027';
+        // --- 2. DYNAMIC CLASS CALCULATION (Quantile-based breaks) ---
+        function calculateClassBreaks(values, numClasses = 6) {
+            if (values.length === 0) return [];
+            
+            const sorted = [...values].sort((a, b) => a - b);
+            const min = sorted[0];
+            const max = sorted[sorted.length - 1];
+            
+            // If all values are the same, return single class
+            if (min === max) {
+                return [{ min: min, max: max, color: classColors[2] }];
+            }
+            
+            // Calculate quantile-based breaks
+            const breaks = [];
+            for (let i = 0; i <= numClasses; i++) {
+                const percentile = i / numClasses;
+                const index = Math.floor(percentile * (sorted.length - 1));
+                breaks.push(sorted[index]);
+            }
+            
+            // Remove duplicates and create class ranges
+            const uniqueBreaks = [...new Set(breaks)];
+            const classes = [];
+            
+            for (let i = 0; i < uniqueBreaks.length - 1; i++) {
+                classes.push({
+                    min: uniqueBreaks[i],
+                    max: uniqueBreaks[i + 1],
+                    color: classColors[Math.min(i, classColors.length - 1)]
+                });
+            }
+            
+            return classes;
         }
 
-        // --- 3. RUN GRID PREDICTION ---
+        // --- 3. GET COLOR BASED ON DYNAMIC CLASSES ---
+        function getColorForROS(ros, classBreaks) {
+            if (classBreaks.length === 0) return '#cccccc';
+            
+            for (let i = 0; i < classBreaks.length; i++) {
+                if (ros <= classBreaks[i].max) {
+                    return classBreaks[i].color;
+                }
+            }
+            return classBreaks[classBreaks.length - 1].color;
+        }
+
+        // --- 4. UPDATE LEGEND ---
+        function updateLegend(classBreaks) {
+            const legendItems = document.getElementById('legend-items');
+            
+            if (classBreaks.length === 0) {
+                legendItems.innerHTML = '<p class="text-xs text-slate-500 italic">No data available</p>';
+                return;
+            }
+            
+            let html = '';
+            classBreaks.forEach((cls, index) => {
+                const minLabel = cls.min.toFixed(0);
+                const maxLabel = cls.max.toFixed(0);
+                const label = index === classBreaks.length - 1 
+                    ? `${minLabel} - ${maxLabel}`
+                    : `${minLabel} - ${maxLabel}`;
+                
+                html += `
+                    <div class="flex gap-2 items-center">
+                        <div class="w-8 h-4 rounded-sm" style="background: ${cls.color}"></div>
+                        <span class="text-xs text-slate-600">${label}</span>
+                    </div>
+                `;
+            });
+            
+            legendItems.innerHTML = html;
+        }
+
+        // --- 5. RUN GRID PREDICTION ---
         async function runGridPrediction() {
             const datetimeInput = document.getElementById('datetime-input');
             const datetimeValue = datetimeInput.value;
             const fStartValue = parseFloat(document.getElementById('f-start-input').value) || 0;
-            const durationValue = parseInt(document.getElementById('duration-input').value) || 60;
+            const durationValue = parseInt(document.getElementById('duration-input').value) || 1;
             const modelType = document.getElementById('model-selector').value;
 
             if (!datetimeValue) {
@@ -280,6 +332,7 @@
             document.getElementById('successful-cells').innerHTML = '<div class="loader ease-linear rounded-full border-2 border-t-2 border-gray-200 h-8 w-8"></div>';
             document.getElementById('avg-ros-output').innerText = '...';
             document.getElementById('max-ros-output').innerText = '...';
+            document.getElementById('legend-items').innerHTML = '<p class="text-xs text-slate-500 italic">Loading...</p>';
 
             // Clear existing grid layer
             if (gridLayer) {
@@ -314,20 +367,26 @@
 
                     // Calculate stats
                     if (predictions.length > 0) {
-                        const rosValues = predictions.map(p => p.prediction);
-                        const avgRos = rosValues.reduce((a, b) => a + b, 0) / rosValues.length;
-                        const maxRos = Math.max(...rosValues);
+                        // Convert m/min to m/hour (multiply by 60)
+                        const rosValuesHour = predictions.map(p => p.prediction * 60);
+                        const avgRos = rosValuesHour.reduce((a, b) => a + b, 0) / rosValuesHour.length;
+                        const maxRos = Math.max(...rosValuesHour);
 
-                        document.getElementById('avg-ros-output').innerText = avgRos.toFixed(2);
-                        document.getElementById('max-ros-output').innerText = maxRos.toFixed(2);
+                        document.getElementById('avg-ros-output').innerText = avgRos.toFixed(1);
+                        document.getElementById('max-ros-output').innerText = maxRos.toFixed(1);
+
+                        // Calculate dynamic class breaks based on data
+                        currentClassBreaks = calculateClassBreaks(rosValuesHour, 6);
+                        updateLegend(currentClassBreaks);
 
                         // Draw grid on map
                         const rectangles = [];
                         predictions.forEach(pred => {
                             const lat = pred.lat;
                             const lon = pred.lon;
-                            const ros = pred.prediction;
-                            const color = getColorForROS(ros);
+                            const rosHour = pred.prediction * 60; // Convert to m/hour
+                            const errorHour = pred.error_estimate * 60; // Convert error too
+                            const color = getColorForROS(rosHour, currentClassBreaks);
 
                             // Create rectangle for 0.1° cell
                             const bounds = [
@@ -344,8 +403,8 @@
                                 <strong>ROS Prediction</strong><br>
                                 Lat: ${lat.toFixed(4)}<br>
                                 Lon: ${lon.toFixed(4)}<br>
-                                ROS: ${ros.toFixed(2)} m/min<br>
-                                Error: ±${pred.error_estimate.toFixed(2)} m/min
+                                ROS: ${rosHour.toFixed(1)} m/hour<br>
+                                Error: ±${errorHour.toFixed(1)} m/hour
                             `);
 
                             rectangles.push(rect);
@@ -359,6 +418,7 @@
                         document.getElementById('avg-ros-output').innerText = 'N/A';
                         document.getElementById('max-ros-output').innerText = 'N/A';
                         document.getElementById('grid-status').innerText = 'No valid predictions';
+                        updateLegend([]);
                         alert('No valid predictions were generated. Check if data is available for this date.');
                     }
 
@@ -373,6 +433,7 @@
                 document.getElementById('successful-cells').innerHTML = '<span class="text-red-500 text-sm">ERR</span>';
                 document.getElementById('avg-ros-output').innerText = 'ERR';
                 document.getElementById('max-ros-output').innerText = 'ERR';
+                updateLegend([]);
                 alert('Error running grid prediction: ' + error.message);
             }
         }

@@ -40,18 +40,17 @@ def predict_grid():
         
         master_file = "Data/Master_Table.nc"
         ds_master = None
-        
-        # Check if Master_Table exists
+
+        # ------------------- Checar se Master_Table existe -------------------
         if os.path.exists(master_file):
             with xr.open_dataset(master_file) as ds:
-                ds_master = ds.load()
-        
-        # Columns to check for valid data
-        cols_to_check = ['fuel_load', 'pct_3_8', 'pct_8p', 'rh_2m',
-                         'wv100_kh', 'wdir_950', 'FWI_12h', 'predictions', 'linear_pred']
-        
-        # Check if data exists for all durations
+                ds_master = ds.load()  # Carrega em memória e fecha o arquivos
+
+        # ------------------- Verificar se já existem dados válidos para todas as durations -------------------
         data_exists = False
+        cols_to_check = ['fuel_load', 'pct_3_8', 'pct_8p', 'rh_2m', 
+                        'wv100_kh', 'wdir_950', 'FWI_12h', 'predictions', 'linear_pred']
+
         if ds_master is not None:
             valid = True
             for dur in range(1, duration + 1):
@@ -61,27 +60,33 @@ def predict_grid():
                         duration_hours=dur,
                         fstart=mins_since_fire_start
                     ).to_dataframe().reset_index()
-                    
+
+                    # Se nenhuma coluna de interesse tiver valor válido, a duração não está pronta
                     if not df_slice[cols_to_check].notna().any().any():
                         valid = False
-                        break
+                        break  # não precisa checar as próximas durations
+
                 except KeyError:
                     valid = False
                     break
+
             data_exists = valid
-        
-        # Extract or calculate data
+
+        # ------------------- Extrair ou calcular -------------------
         if data_exists:
-            print("Data exists in Master_Table. Extracting...")
+            print("Dados já existentes no Master_Table. Extraindo...")
+            # Extrair todas as durations de 1 até duration
             model_inputs = ds_master.sel(
                 s_time=start_time,
                 duration_hours=slice(1, duration),
                 fstart=mins_since_fire_start
             ).to_dataframe().reset_index()
         else:
-            print("Calculating new data and updating Master_Table...")
+            print("Calculando novos dados e atualizando Master_Table...")
+            # Chama a função do Model_Prediction.py
             Model_Prediction.calculate_and_append_master(start_time, duration, mins_since_fire_start)
-            
+
+            # Depois de atualizar o NetCDF, abrir a fatia recém-calculada
             with xr.open_dataset(master_file) as ds:
                 ds_master = ds.load()
                 model_inputs = ds_master.sel(
@@ -89,12 +94,14 @@ def predict_grid():
                     duration_hours=slice(1, duration),
                     fstart=mins_since_fire_start
                 ).to_dataframe().reset_index()
-        
-        # Clean model_inputs - remove rows where all check columns are NaN
+
+        # ------------------- Limpar model_inputs -------------------
+        # Remover linhas onde **todas essas colunas** são NaN
         model_inputs = model_inputs.dropna(subset=cols_to_check, how='all')
         
         # Select prediction column based on model type
         pred_col = 'predictions' if model_type == 'complex' else 'linear_pred'
+        
         
         # Prepare predictions for response
         predictions = []
@@ -143,7 +150,7 @@ def _generate_tiff_outputs(df_slice, max_duration):
     os.makedirs('Data/Output', exist_ok=True)
     
     # Get unique durations
-    if 'duration' not in df_slice.columns:
+    if 'duration_hours' not in df_slice.columns:
         return
     
     vmin = df_slice['linear_pred_smoothed'].min()

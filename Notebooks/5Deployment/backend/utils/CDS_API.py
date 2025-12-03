@@ -31,7 +31,7 @@ def fetch_era5_data(year, month, day, hour):
         Caminhos dos ficheiros descarregados
     """
 
-    token_file = Path("API_tokens.txt")
+    token_file = Path("backend/utils/API_tokens.txt")
 
     # Ler tokens
     tokens = {}
