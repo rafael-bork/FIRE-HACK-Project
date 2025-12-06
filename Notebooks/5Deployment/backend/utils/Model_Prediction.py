@@ -54,8 +54,8 @@ def calculate_and_append_master(start_time, duration, mins_since_fire_start, mas
     fstarts = np.sort(df['fstart'].unique())
 
     dims = ('s_time', 'latitude', 'longitude', 'duration_hours', 'fstart')
-    variables = ['fuel_load', 'pct_3_8', 'pct_8p', 'rh_2m', 'wv100_kh',
-                 'wdir_950', 'FWI_12h', 'predictions', 'linear_pred']
+    variables = ['fuel_load', 'pct_3_8', 'pct_8p', 'wv100_kh',
+                  'FWI_12h', 'predictions', 'linear_pred']
 
     ds_new = xr.Dataset()
     for var in variables:

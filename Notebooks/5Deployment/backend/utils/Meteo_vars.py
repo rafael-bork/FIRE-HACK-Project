@@ -4,8 +4,10 @@ import xarray as xr
 from scipy.interpolate import griddata
 from metpy.units import units
 from metpy.calc import relative_humidity_from_dewpoint, wind_direction
+from contextlib import nullcontext
 
-
+def safe_open(path):
+    return xr.open_dataset(path, engine="netcdf4") if path else nullcontext(None)
 
 def prepare_datasets(sl_file, pl_file, fwi_file, land_file, target_res=0.1):
     """
@@ -34,25 +36,21 @@ def prepare_datasets(sl_file, pl_file, fwi_file, land_file, target_res=0.1):
 
     # ==================== LOAD DATASETS ====================
     print("Loading datasets...")
-    with xr.open_dataset(sl_file, engine="netcdf4") as ds_SL, \
-         xr.open_dataset(pl_file, engine="netcdf4") as ds_PL, \
-         xr.open_dataset(fwi_file, engine="netcdf4") as ds_FWI, \
-         xr.open_dataset(land_file, engine="netcdf4") as ds_Land:
+    with safe_open(sl_file) as ds_SL, \
+        safe_open(pl_file) as ds_PL, \
+        safe_open(fwi_file) as ds_FWI, \
+        safe_open(land_file) as ds_Land:
 
         # ==================== RENAME VARIABLES ====================
         ds_SL = ds_SL.rename({"u100": "u100_ms", "v100": "v100_ms"})
-        ds_PL = ds_PL.rename({"u": "u_ms", "v": "v_ms"})
+        # ds_PL = ds_PL.rename({"u": "u_ms", "v": "v_ms"})
         ds_FWI = ds_FWI.rename({"fwinx": "FWI_12h"})
-        ds_Land = ds_Land.rename({"t2m": "t2m_K", "d2m": "d2m_K"})
+        # ds_Land = ds_Land.rename({"t2m": "t2m_K", "d2m": "d2m_K"})
 
         # ==================== DROP UNNECESSARY VARIABLES ====================
         if 'number' in ds_SL: ds_SL = ds_SL.drop_vars(['number'])
         if 'expver' in ds_SL: ds_SL = ds_SL.drop_vars(['expver'])
-        if 'number' in ds_PL: ds_PL = ds_PL.drop_vars(['number'])
-        if 'expver' in ds_PL: ds_PL = ds_PL.drop_vars(['expver'])
         if 'surface' in ds_FWI: ds_FWI = ds_FWI.drop_vars(['surface'])
-        if 'number' in ds_Land: ds_Land = ds_Land.drop_vars(['number'])
-        if 'expver' in ds_Land: ds_Land = ds_Land.drop_vars(['expver'])
 
         # ==================== CREATE TARGET GRID ====================
         lat_min, lat_max = 36.9, 43.0
@@ -65,8 +63,8 @@ def prepare_datasets(sl_file, pl_file, fwi_file, land_file, target_res=0.1):
         # ==================== INTERPOLATE ERA5 DATA ====================
         print("Interpolating ERA5 datasets to 0.1° grid...")
         ds_SL = ds_SL.interp(latitude=lat_new, longitude=lon_new, method='linear')
-        ds_PL = ds_PL.interp(latitude=lat_new, longitude=lon_new, method='linear')
-        ds_Land = ds_Land.interp(latitude=lat_new, longitude=lon_new, method='linear')
+        # ds_PL = ds_PL.interp(latitude=lat_new, longitude=lon_new, method='linear')
+        # ds_Land = ds_Land.interp(latitude=lat_new, longitude=lon_new, method='linear')
 
         # ==================== PREPARE FWI DATA ====================
         print("Regridding FWI dataset to match ERA5 grid...")
@@ -159,50 +157,48 @@ def calculate_weather_variables(ds_SL, ds_PL, ds_FWI, ds_Land):
 
     wv100_kh = np.sqrt(ds_SL["u100_kh"]**2 + ds_SL["v100_kh"]**2)
 
-    # ==================== WIND DIRECTION 950 hPa ====================
-    print("Computing wind direction at 950 hPa...")
+    '''    # ==================== WIND DIRECTION 950 hPa ====================
+        print("Computing wind direction at 950 hPa...")
 
-    u950 = ds_PL["u_ms"].sel(pressure_level=950) * units("m/s")
-    v950 = ds_PL["v_ms"].sel(pressure_level=950) * units("m/s")
+        u950 = ds_PL["u_ms"].sel(pressure_level=950) * units("m/s")
+        v950 = ds_PL["v_ms"].sel(pressure_level=950) * units("m/s")
 
-    wdir_950 = wind_direction(u950, v950)
+        wdir_950 = wind_direction(u950, v950)'''
 
-    # ==================== RELATIVE HUMIDITY AT 2m ====================
-    print("Computing blended RH at 2m...")
+    '''    # ==================== RELATIVE HUMIDITY AT 2m ====================
+        print("Computing blended RH at 2m...")
 
-    # ERA5-Land temperature & dewpoint
-    T2_land = ds_Land["t2m_K"]
-    Td2_land = ds_Land["d2m_K"]
+        # ERA5-Land temperature & dewpoint
+        T2_land = ds_Land["t2m_K"]
+        Td2_land = ds_Land["d2m_K"]
 
-    # ERA5-SL fallback temperature & dewpoint (convert to K if necessário)
-    T2_sl = ds_SL["t2m"].values + 273.15 if "t2m" in ds_SL else None
-    Td2_sl = ds_SL["d2m"].values + 273.15 if "d2m" in ds_SL else None
+        # ERA5-SL fallback temperature & dewpoint (convert to K if necessário)
+        T2_sl = ds_SL["t2m"].values + 273.15 if "t2m" in ds_SL else None
+        Td2_sl = ds_SL["d2m"].values + 273.15 if "d2m" in ds_SL else None
 
-    # Blend LAND + SL: usar alpha para LAND, 1-alpha para SL
-    alpha = 0.9
-    if T2_sl is not None:
-        T2_combined = xr.where(~np.isnan(T2_land), alpha*T2_land + (1-alpha)*T2_sl, T2_sl)
-    else:
-        T2_combined = T2_land
+        # Blend LAND + SL: usar alpha para LAND, 1-alpha para SL
+        alpha = 0.9
+        if T2_sl is not None:
+            T2_combined = xr.where(~np.isnan(T2_land), alpha*T2_land + (1-alpha)*T2_sl, T2_sl)
+        else:
+            T2_combined = T2_land
 
-    if Td2_sl is not None:
-        Td2_combined = xr.where(~np.isnan(Td2_land), alpha*Td2_land + (1-alpha)*Td2_sl, Td2_sl)
-    else:
-        Td2_combined = Td2_land
+        if Td2_sl is not None:
+            Td2_combined = xr.where(~np.isnan(Td2_land), alpha*Td2_land + (1-alpha)*Td2_sl, Td2_sl)
+        else:
+            Td2_combined = Td2_land
 
-    # Convert to MetPy units
-    T2 = T2_combined * units.kelvin
-    Td2 = Td2_combined * units.kelvin
+        # Convert to MetPy units
+        T2 = T2_combined * units.kelvin
+        Td2 = Td2_combined * units.kelvin
 
-    rh_2m = relative_humidity_from_dewpoint(T2, Td2) * 100.0
+        rh_2m = relative_humidity_from_dewpoint(T2, Td2) * 100.0'''
 
     # ==================== CREATE OUTPUT DATASET ====================
     ds_output = xr.Dataset(
         {
             'wv100_kh': wv100_kh,
-            'FWI_12h': ds_FWI["FWI_12h"],
-            'rh_2m': rh_2m,
-            'wdir_950': wdir_950
+            'FWI_12h': ds_FWI["FWI_12h"]
         },
         coords={
             'valid_time': ds_SL.valid_time,

@@ -81,7 +81,13 @@ def Compile_data(duration, mins_since_fire_start, start_time):
         ds_meteo_missing = Meteo_dataset.assemble_meteorological_data(missing_times)
 
         # ---------------------- Open GIS dataset ----------------------
-        with xr.open_dataset("backend/utils/Data/GIS_data.nc") as ds_GIS:
+        Gis_path = Path("backend/utils/Data/GIS_data.nc")
+        fallback_Gis_path = Path("utils/Data/GIS_data.nc")
+
+        if not Gis_path.exists():
+            Gis_path = fallback_Gis_path
+        
+        with xr.open_dataset(Gis_path) as ds_GIS:
             ds_GIS = ds_GIS.rename({"lat": "latitude", "lon": "longitude"})
 
             # ---------------------- Extract year coordinate ----------------------
@@ -105,7 +111,13 @@ def Compile_data(duration, mins_since_fire_start, start_time):
             ds_meteo_missing = add_yearly_vars(ds_meteo_missing, ds_GIS, list(ds_GIS.data_vars))
 
         # ---------------------- Load Portugal cells GeoPackage ----------------------
-        gdf_cells = gpd.read_file("backend/utils/Data/Portugal_cells.gpkg")
+        cells_path = Path("backend/utils/Data/Portugal_cells.gpkg")
+        fallback_cells_path = Path("utils/Data/Portugal_cells.gpkg")
+
+        if not cells_path.exists():
+            cells_path = fallback_cells_path
+
+        gdf_cells = gpd.read_file(cells_path)
         if gdf_cells.crs.to_string() != "EPSG:4326":
             gdf_cells = gdf_cells.to_crs("EPSG:4326")
         cells_union = gdf_cells.geometry.union_all()
@@ -159,8 +171,8 @@ def Compile_data(duration, mins_since_fire_start, start_time):
 
     df_all = df_all.sort_values(["s_time", "latitude", "longitude", "duration_hours"])[
         ["s_time", "latitude", "longitude", "duration_hours",
-         "fuel_load", "pct_3_8", "pct_8p", "rh_2m",
-         "wv100_kh", "wdir_950", "FWI_12h", "fstart"]
+         "fuel_load", "pct_3_8", "pct_8p",
+         "wv100_kh", "FWI_12h", "fstart"]
     ]
 
     return df_all

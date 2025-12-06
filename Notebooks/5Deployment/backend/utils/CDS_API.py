@@ -64,9 +64,7 @@ def fetch_era5_data(year, month, day, hour):
             "product_type": ["reanalysis"],
             "variable": [
                 "100m_u_component_of_wind",
-                "100m_v_component_of_wind",
-                "2m_dewpoint_temperature",
-                "2m_temperature"
+                "100m_v_component_of_wind"
             ],
             "year": year,
             "month": month,
@@ -89,38 +87,38 @@ def fetch_era5_data(year, month, day, hour):
 
     downloaded_files["single_levels"] = sl_target
 
-    # ==================== PRESSURE LEVELS ====================
-    pl_filename = f"ERA5_PL_{time_code}.nc"
-    pl_target = output_folder / pl_filename
+    '''    # ==================== PRESSURE LEVELS ====================
+        pl_filename = f"ERA5_PL_{time_code}.nc"
+        pl_target = output_folder / pl_filename
 
-    if not pl_target.exists():
-        pressure_levels_request = {
-            "product_type": ["reanalysis"],
-            "variable": [
-                "u_component_of_wind",
-                "v_component_of_wind",
-            ],
-            "pressure_level": ["950"],
-            "year": year,
-            "month": month,
-            "day": day,
-            "time": hour,
-            "data_format": "netcdf",
-            "download_format": "unarchived",
-            "area": [43, -10, 36, -6],
-        }
+        if not pl_target.exists():
+            pressure_levels_request = {
+                "product_type": ["reanalysis"],
+                "variable": [
+                    "u_component_of_wind",
+                    "v_component_of_wind",
+                ],
+                "pressure_level": ["950"],
+                "year": year,
+                "month": month,
+                "day": day,
+                "time": hour,
+                "data_format": "netcdf",
+                "download_format": "unarchived",
+                "area": [43, -10, 36, -6],
+            }
 
-        print(f"Requesting: {pl_filename}")
-        cds_client.retrieve(
-            "reanalysis-era5-pressure-levels",
-            pressure_levels_request,
-            str(pl_target),
-        )
+            print(f"Requesting: {pl_filename}")
+            cds_client.retrieve(
+                "reanalysis-era5-pressure-levels",
+                pressure_levels_request,
+                str(pl_target),
+            )
 
-    else:
-        print("PL dataset already exists")
+        else:
+            print("PL dataset already exists")
 
-    downloaded_files["pressure_levels"] = pl_target
+        downloaded_files["pressure_levels"] = pl_target'''
 
     # ==================== FIRE WEATHER INDEX ====================
     fwi_filename = f"ERA5_FWI_{time_code}.nc"
@@ -153,37 +151,37 @@ def fetch_era5_data(year, month, day, hour):
 
     downloaded_files["fwi"] = fwi_target
 
-    # ==================== ERA5 LAND ====================
-    land_filename = f"ERA5_Lan_{time_code}.nc"
-    land_target = output_folder / land_filename
+    '''    # ==================== ERA5 LAND ====================
+        land_filename = f"ERA5_Lan_{time_code}.nc"
+        land_target = output_folder / land_filename
 
-    if not land_target.exists():
-        land_request = {
-            "product_type": ["reanalysis"],
-            "variable": [
-                "2m_dewpoint_temperature",
-                "2m_temperature",
-            ],
-            "year": year,
-            "month": month,
-            "day": day,
-            "time": hour,
-            "data_format": "netcdf",
-            "download_format": "unarchived",
-            "area": [43, -10, 36, -6],
-        }
+        if not land_target.exists():
+            land_request = {
+                "product_type": ["reanalysis"],
+                "variable": [
+                    "2m_dewpoint_temperature",
+                    "2m_temperature",
+                ],
+                "year": year,
+                "month": month,
+                "day": day,
+                "time": hour,
+                "data_format": "netcdf",
+                "download_format": "unarchived",
+                "area": [43, -10, 36, -6],
+            }
 
-        print(f"Requesting: {land_filename}")
-        cds_client.retrieve(
-            "reanalysis-era5-land",
-            land_request,
-            str(land_target),
-        )
+            print(f"Requesting: {land_filename}")
+            cds_client.retrieve(
+                "reanalysis-era5-land",
+                land_request,
+                str(land_target),
+            )
 
-    else:
-        print("Land dataset already exists")
+        else:
+            print("Land dataset already exists")
 
-    downloaded_files["Land"] = land_target
+        downloaded_files["Land"] = land_target'''
 
     return downloaded_files
 

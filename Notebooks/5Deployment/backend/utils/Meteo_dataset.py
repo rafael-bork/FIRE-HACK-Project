@@ -60,21 +60,16 @@ def assemble_meteorological_data(required_times):
 
     # ---------------------- Process downloaded data ----------------------
     ds_SL, ds_PL, ds_FWI, ds_Land = Meteo_vars.prepare_datasets(
-        sl_file=era5_files['single_levels'],
-        pl_file=era5_files['pressure_levels'],
-        fwi_file=era5_files['fwi'],
-        land_file=era5_files['Land']
+        sl_file=era5_files.get('single_levels'),
+        pl_file=era5_files.get('pressure_levels'),  
+        fwi_file=era5_files.get('fwi'),
+        land_file=era5_files.get('Land')
     )
 
     ds_meteovars = Meteo_vars.calculate_weather_variables(ds_SL, ds_PL, ds_FWI, ds_Land)
     ds_meteovars = ds_meteovars.sel(valid_time=required_times)
-    ds_meteovars = ds_meteovars.drop_vars('pressure_level')
-
-    ds_SL.close()
-    ds_PL.close()
-    ds_FWI.close()
-    ds_Land.close()
-
+    if 'pressure_level' in ds_meteovars:
+        ds_meteovars = ds_meteovars.drop_vars('pressure_level')
 
     for f in glob.glob("Data/ERA5*.nc"):
         os.remove(f)
