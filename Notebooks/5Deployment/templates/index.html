@@ -153,22 +153,54 @@
             margin-top: 4px;
         }
 
-        /* Legend */
-        .legend-item {
+        /* Continuous Gradient Legend */
+        .gradient-bar {
+            height: 12px;
+            border-radius: 6px;
+            background: linear-gradient(to right, #22c55e, #84cc16, #eab308, #f97316, #ef4444, #b91c1c);
+        }
+
+        .gradient-bar.input-var {
+            background: linear-gradient(to right, #3b82f6, #8b5cf6, #d946ef);
+        }
+
+        .gradient-labels {
             display: flex;
-            align-items: center;
-            gap: 10px;
+            justify-content: space-between;
+            margin-top: 6px;
         }
 
-        .legend-color {
-            width: 24px;
-            height: 10px;
-            border-radius: 3px;
+        .gradient-labels span {
+            font-size: 10px;
+            color: var(--text-muted);
         }
 
-        .legend-text {
+        /* Toggle Switch */
+        .toggle-container {
+            display: flex;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+            padding: 3px;
+            gap: 3px;
+        }
+
+        .toggle-btn {
+            flex: 1;
+            padding: 8px 12px;
             font-size: 11px;
-            color: var(--text-secondary);
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: transparent;
+            color: var(--text-muted);
+        }
+
+        .toggle-btn.active {
+            background: white;
+            color: var(--text-primary);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
 
         /* Loader */
@@ -243,6 +275,10 @@
         @keyframes pulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
+        }
+
+        .hidden {
+            display: none;
         }
     </style>
 </head>
@@ -338,11 +374,50 @@
 
             <div class="divider"></div>
 
-            <!-- Legend -->
+            <!-- View Toggle -->
             <div class="mb-4">
+                <div class="label mb-3">Display Layer</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn active" id="toggle-ros" onclick="setViewMode('ros')">ROS</button>
+                    <button class="toggle-btn" id="toggle-inputs" onclick="setViewMode('inputs')">Input Vars</button>
+                </div>
+            </div>
+
+            <!-- Input Variable Selector (hidden by default) -->
+            <div id="input-var-selector-container" class="mb-4 hidden">
+                <label class="label">Variable</label>
+                <select id="input-var-selector" class="select-field" onchange="updateInputVarDisplay()">
+                    <option value="fuel_load">Fuel Load</option>
+                    <option value="pct_3_8">PCT 3-8</option>
+                    <option value="pct_8p">PCT 8+</option>
+                    <option value="wv100_kh">Wind (100m, km/h)</option>
+                    <option value="FWI_12h">FWI 12h</option>
+                </select>
+            </div>
+
+            <!-- Continuous Gradient Legend - ROS -->
+            <div class="mb-4" id="legend-ros">
                 <div class="label mb-3">Rate of Spread (m/hr)</div>
-                <div id="legend-items" class="space-y-2">
-                    <p class="text-[11px] text-gray-400 italic">Run prediction to see legend</p>
+                <div class="gradient-bar"></div>
+                <div class="gradient-labels">
+                    <span>200</span>
+                    <span>650</span>
+                    <span>1100</span>
+                    <span>1550</span>
+                    <span>2000</span>
+                </div>
+            </div>
+
+            <!-- Continuous Gradient Legend - Input Variables -->
+            <div class="mb-4 hidden" id="legend-inputs">
+                <div class="label mb-3" id="input-var-legend-title">Fuel Load</div>
+                <div class="gradient-bar input-var"></div>
+                <div class="gradient-labels" id="input-var-legend-labels">
+                    <span>0</span>
+                    <span>—</span>
+                    <span>—</span>
+                    <span>—</span>
+                    <span>Max</span>
                 </div>
             </div>
 
@@ -399,71 +474,210 @@
         const API_BASE_URL = 'http://localhost:5050/api';
 
         let gridLayer = null;
-        let currentClassBreaks = [];
-        const classColors = ['#22c55e', '#84cc16', '#eab308', '#f97316', '#ef4444', '#dc2626'];
+        let currentPredictions = [];
+        let currentViewMode = 'ros';
+        let inputVarRanges = {};
 
-        function calculateClassBreaks(values, numClasses = 6) {
-            if (values.length === 0) return [];
-            
-            const sorted = [...values].sort((a, b) => a - b);
-            const min = sorted[0];
-            const max = sorted[sorted.length - 1];
-            
-            if (min === max) {
-                return [{ min: min, max: max, color: classColors[2] }];
-            }
-            
-            const breaks = [];
-            for (let i = 0; i <= numClasses; i++) {
-                const percentile = i / numClasses;
-                const index = Math.floor(percentile * (sorted.length - 1));
-                breaks.push(sorted[index]);
-            }
-            
-            const uniqueBreaks = [...new Set(breaks)];
-            const classes = [];
-            
-            for (let i = 0; i < uniqueBreaks.length - 1; i++) {
-                classes.push({
-                    min: uniqueBreaks[i],
-                    max: uniqueBreaks[i + 1],
-                    color: classColors[Math.min(i, classColors.length - 1)]
-                });
-            }
-            
-            return classes;
-        }
+        // Human-readable names for input variables
+        const inputVarLabels = {
+            'fuel_load': 'Fuel Load',
+            'pct_3_8': 'PCT 3-8',
+            'pct_8p': 'PCT 8+',
+            'wv100_kh': 'Wind (100m, km/h)',
+            'FWI_12h': 'FWI 12h'
+        };
 
-        function getColorForROS(ros, classBreaks) {
-            if (classBreaks.length === 0) return '#cccccc';
-            
-            for (let i = 0; i < classBreaks.length; i++) {
-                if (ros <= classBreaks[i].max) {
-                    return classBreaks[i].color;
+        // Continuous gradient color stops for ROS (green to red)
+        const rosColorStops = [
+            { pos: 0, r: 34, g: 197, b: 94 },      // #22c55e - Green
+            { pos: 0.2, r: 132, g: 204, b: 22 },   // #84cc16 - Lime
+            { pos: 0.4, r: 234, g: 179, b: 8 },    // #eab308 - Yellow
+            { pos: 0.6, r: 249, g: 115, b: 22 },   // #f97316 - Orange
+            { pos: 0.8, r: 239, g: 68, b: 68 },    // #ef4444 - Red
+            { pos: 1, r: 185, g: 28, b: 28 }       // #b91c1c - Dark Red
+        ];
+
+        // Continuous gradient color stops for input variables (blue to purple to pink)
+        const inputColorStops = [
+            { pos: 0, r: 59, g: 130, b: 246 },     // #3b82f6 - Blue
+            { pos: 0.5, r: 139, g: 92, b: 246 },   // #8b5cf6 - Purple
+            { pos: 1, r: 217, g: 70, b: 239 }      // #d946ef - Pink
+        ];
+
+        function interpolateColor(t, colorStops) {
+            let lower = colorStops[0];
+            let upper = colorStops[colorStops.length - 1];
+
+            for (let i = 0; i < colorStops.length - 1; i++) {
+                if (t >= colorStops[i].pos && t <= colorStops[i + 1].pos) {
+                    lower = colorStops[i];
+                    upper = colorStops[i + 1];
+                    break;
                 }
             }
-            return classBreaks[classBreaks.length - 1].color;
+
+            const range = upper.pos - lower.pos;
+            const localT = range === 0 ? 0 : (t - lower.pos) / range;
+
+            const r = Math.round(lower.r + (upper.r - lower.r) * localT);
+            const g = Math.round(lower.g + (upper.g - lower.g) * localT);
+            const b = Math.round(lower.b + (upper.b - lower.b) * localT);
+
+            return `rgb(${r}, ${g}, ${b})`;
         }
 
-        function updateLegend(classBreaks) {
-            const legendItems = document.getElementById('legend-items');
+        function getColorForROS(ros) {
+            const value = Math.max(200, Math.min(2000, ros));
+            const t = (value - 200) / (2000 - 200);
+            return interpolateColor(t, rosColorStops);
+        }
+
+        function getColorForInputVar(value, varName) {
+            const range = inputVarRanges[varName];
+            if (!range || range.max === range.min) {
+                return interpolateColor(0.5, inputColorStops);
+            }
+            const t = (value - range.min) / (range.max - range.min);
+            return interpolateColor(Math.max(0, Math.min(1, t)), inputColorStops);
+        }
+
+        function setViewMode(mode) {
+            currentViewMode = mode;
             
-            if (classBreaks.length === 0) {
-                legendItems.innerHTML = '<p class="text-[11px] text-gray-400 italic">No data</p>';
-                return;
+            // Update toggle buttons
+            document.getElementById('toggle-ros').classList.toggle('active', mode === 'ros');
+            document.getElementById('toggle-inputs').classList.toggle('active', mode === 'inputs');
+            
+            // Show/hide input variable selector
+            document.getElementById('input-var-selector-container').classList.toggle('hidden', mode === 'ros');
+            
+            // Show/hide legends
+            document.getElementById('legend-ros').classList.toggle('hidden', mode === 'inputs');
+            document.getElementById('legend-inputs').classList.toggle('hidden', mode === 'ros');
+            
+            // Redraw grid if we have predictions
+            if (currentPredictions.length > 0) {
+                drawGrid();
+            }
+        }
+
+        function updateInputVarDisplay() {
+            const varName = document.getElementById('input-var-selector').value;
+            
+            // Update legend title
+            document.getElementById('input-var-legend-title').innerText = inputVarLabels[varName] || varName;
+            
+            // Update legend labels
+            const range = inputVarRanges[varName];
+            if (range) {
+                const labels = document.getElementById('input-var-legend-labels');
+                const step = (range.max - range.min) / 4;
+                labels.innerHTML = `
+                    <span>${range.min.toFixed(1)}</span>
+                    <span>${(range.min + step).toFixed(1)}</span>
+                    <span>${(range.min + step * 2).toFixed(1)}</span>
+                    <span>${(range.min + step * 3).toFixed(1)}</span>
+                    <span>${range.max.toFixed(1)}</span>
+                `;
             }
             
-            let html = '';
-            classBreaks.forEach((cls) => {
-                html += `
-                    <div class="legend-item">
-                        <div class="legend-color" style="background: ${cls.color}"></div>
-                        <span class="legend-text">${cls.min.toFixed(0)} – ${cls.max.toFixed(0)}</span>
+            // Redraw grid
+            if (currentPredictions.length > 0) {
+                drawGrid();
+            }
+        }
+
+        function calculateInputVarRanges(predictions) {
+            inputVarRanges = {};
+            const varNames = ['fuel_load', 'pct_3_8', 'pct_8p', 'wv100_kh', 'FWI_12h'];
+            
+            varNames.forEach(varName => {
+                const values = predictions
+                    .map(p => p.input_vars ? p.input_vars[varName] : null)
+                    .filter(v => v !== null && v !== undefined);
+                
+                if (values.length > 0) {
+                    inputVarRanges[varName] = {
+                        min: Math.min(...values),
+                        max: Math.max(...values)
+                    };
+                }
+            });
+        }
+
+        function drawGrid() {
+            if (gridLayer) {
+                map.removeLayer(gridLayer);
+            }
+
+            const rectangles = [];
+            const selectedVar = document.getElementById('input-var-selector').value;
+
+            currentPredictions.forEach(pred => {
+                const lat = pred.lat;
+                const lon = pred.lon;
+                const rosHour = pred.prediction * 60;
+                const errorHour = pred.error_estimate * 60;
+                
+                let color;
+                if (currentViewMode === 'ros') {
+                    color = getColorForROS(rosHour);
+                } else {
+                    const varValue = pred.input_vars ? pred.input_vars[selectedVar] : null;
+                    color = varValue !== null ? getColorForInputVar(varValue, selectedVar) : '#cccccc';
+                }
+
+                const bounds = [
+                    [lat - 0.05, lon - 0.05],
+                    [lat + 0.05, lon + 0.05]
+                ];
+
+                // Build popup content
+                let popupContent = `
+                    <div style="font-family: Helvetica, sans-serif; font-size: 12px;">
+                        <div style="font-weight: 600; margin-bottom: 6px; color: #1a1a1a;">Cell Info</div>
+                        <div style="color: #666; line-height: 1.6;">
+                            <div>Lat: ${lat.toFixed(4)}</div>
+                            <div>Lon: ${lon.toFixed(4)}</div>
+                            <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #eee;">
+                                <div style="font-weight: 600; color: #1a1a1a; margin-bottom: 4px;">Prediction</div>
+                                <div style="color: #e85d04; font-weight: 600;">ROS: ${rosHour.toFixed(1)} m/hr</div>
+                                <div>Error: ±${errorHour.toFixed(1)}</div>
+                            </div>
+                `;
+                
+                // Add input variables section
+                if (pred.input_vars) {
+                    popupContent += `
+                            <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #eee;">
+                                <div style="font-weight: 600; color: #1a1a1a; margin-bottom: 4px;">Input Variables</div>
+                    `;
+                    
+                    for (const [key, value] of Object.entries(pred.input_vars)) {
+                        const label = inputVarLabels[key] || key;
+                        const displayValue = value !== null ? value.toFixed(2) : 'N/A';
+                        popupContent += `<div>${label}: ${displayValue}</div>`;
+                    }
+                    
+                    popupContent += `</div>`;
+                }
+                
+                popupContent += `
+                        </div>
                     </div>
                 `;
+
+                const rect = L.rectangle(bounds, {
+                    color: color,
+                    fillColor: color,
+                    fillOpacity: 0.6,
+                    weight: 0.5
+                }).bindPopup(popupContent);
+
+                rectangles.push(rect);
             });
-            
-            legendItems.innerHTML = html;
+
+            gridLayer = L.layerGroup(rectangles).addTo(map);
         }
 
         function setStatus(status) {
@@ -498,7 +712,6 @@
             document.getElementById('successful-cells').innerHTML = '<div class="loader"></div>';
             document.getElementById('avg-ros-output').innerText = '...';
             document.getElementById('max-ros-output').innerText = '...';
-            document.getElementById('legend-items').innerHTML = '<p class="text-[11px] text-gray-400 italic">Loading...</p>';
 
             if (gridLayer) {
                 map.removeLayer(gridLayer);
@@ -519,7 +732,7 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    const predictions = data.predictions;
+                    currentPredictions = data.predictions;
                     const totalCells = data.total_cells;
                     const successfulCells = data.successful_cells;
 
@@ -527,56 +740,26 @@
                     document.getElementById('total-cells').innerHTML = totalCells;
                     document.getElementById('successful-cells').innerHTML = successfulCells;
 
-                    if (predictions.length > 0) {
-                        const rosValuesHour = predictions.map(p => p.prediction * 60);
+                    if (currentPredictions.length > 0) {
+                        const rosValuesHour = currentPredictions.map(p => p.prediction * 60);
                         const avgRos = rosValuesHour.reduce((a, b) => a + b, 0) / rosValuesHour.length;
                         const maxRos = Math.max(...rosValuesHour);
 
                         document.getElementById('avg-ros-output').innerText = avgRos.toFixed(1);
                         document.getElementById('max-ros-output').innerText = maxRos.toFixed(1);
 
-                        currentClassBreaks = calculateClassBreaks(rosValuesHour, 6);
-                        updateLegend(currentClassBreaks);
-
-                        const rectangles = [];
-                        predictions.forEach(pred => {
-                            const lat = pred.lat;
-                            const lon = pred.lon;
-                            const rosHour = pred.prediction * 60;
-                            const errorHour = pred.error_estimate * 60;
-                            const color = getColorForROS(rosHour, currentClassBreaks);
-
-                            const bounds = [
-                                [lat - 0.05, lon - 0.05],
-                                [lat + 0.05, lon + 0.05]
-                            ];
-
-                            const rect = L.rectangle(bounds, {
-                                color: color,
-                                fillColor: color,
-                                fillOpacity: 0.6,
-                                weight: 0.5
-                            }).bindPopup(`
-                                <div style="font-family: Helvetica, sans-serif; font-size: 12px;">
-                                    <div style="font-weight: 600; margin-bottom: 6px; color: #1a1a1a;">Prediction</div>
-                                    <div style="color: #666; line-height: 1.6;">
-                                        <div>Lat: ${lat.toFixed(4)}</div>
-                                        <div>Lon: ${lon.toFixed(4)}</div>
-                                        <div style="color: #e85d04; font-weight: 600;">ROS: ${rosHour.toFixed(1)} m/hr</div>
-                                        <div>Error: ±${errorHour.toFixed(1)}</div>
-                                    </div>
-                                </div>
-                            `);
-
-                            rectangles.push(rect);
-                        });
-
-                        gridLayer = L.layerGroup(rectangles).addTo(map);
+                        // Calculate input variable ranges for coloring
+                        calculateInputVarRanges(currentPredictions);
+                        
+                        // Update input variable legend
+                        updateInputVarDisplay();
+                        
+                        // Draw the grid
+                        drawGrid();
                     } else {
                         document.getElementById('avg-ros-output').innerText = '—';
                         document.getElementById('max-ros-output').innerText = '—';
                         setStatus('No data');
-                        updateLegend([]);
                         alert('No valid predictions. Check data availability.');
                     }
 
@@ -591,7 +774,6 @@
                 document.getElementById('successful-cells').innerHTML = '—';
                 document.getElementById('avg-ros-output').innerText = '—';
                 document.getElementById('max-ros-output').innerText = '—';
-                updateLegend([]);
                 alert('Error: ' + error.message);
             }
         }
