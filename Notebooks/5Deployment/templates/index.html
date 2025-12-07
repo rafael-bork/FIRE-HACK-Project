@@ -15,7 +15,7 @@
         }
 
         :root {
-            --glass-bg: rgba(255, 255, 255, 0.573);
+            --glass-bg: rgba(255, 255, 255, 0.808);
             --glass-border: rgb(255, 255, 255);
             --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
             --text-primary: #1a1a1a;
@@ -46,7 +46,7 @@
             backdrop-filter: blur(32px);
             -webkit-backdrop-filter: blur(32px);
             border: 1px solid var(--glass-border);
-            border-radius: 20px;
+            border-radius: 22px;
             box-shadow: var(--glass-shadow);
         }
 
@@ -424,6 +424,56 @@
             width: 18px;
             height: 18px;
         }
+
+        /* Map Layer Buttons */
+        .map-layer-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .map-layer-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 8px;
+            background: rgba(255, 255, 255, 0.5);
+            border: 2px solid transparent;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .map-layer-btn:hover {
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .map-layer-btn.active {
+            border-color: var(--accent);
+            background: rgba(232, 93, 4, 0.08);
+        }
+
+        .map-layer-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .map-layer-btn.active svg {
+            color: var(--accent);
+        }
+
+        .map-layer-btn span {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .map-layer-btn.active span {
+            color: var(--accent);
+        }
     </style>
 </head>
 
@@ -431,6 +481,69 @@
 
     <!-- Fullscreen Map -->
     <div id="map"></div>
+
+    <!-- Instructions Panel (Top Right) -->
+    <div class="fixed top-4 right-4 z-[1000]" style="width: 280px;">
+        <div class="glass p-5">
+            <div class="label mb-3">Instructions</div>
+            <div class="space-y-3">
+                <div class="flex gap-3">
+                    <span class="text-[11px] font-semibold text-orange-500">1</span>
+                    <p class="text-[11px] text-gray-600 leading-relaxed">Select fire event date & time (2015–2025)</p>
+                </div>
+                <div class="flex gap-3">
+                    <span class="text-[11px] font-semibold text-orange-500">2</span>
+                    <p class="text-[11px] text-gray-600 leading-relaxed">Set prediction duration in hours</p>
+                </div>
+                <div class="flex gap-3">
+                    <span class="text-[11px] font-semibold text-orange-500">3</span>
+                    <p class="text-[11px] text-gray-600 leading-relaxed">Adjust fire start time if needed (optional)</p>
+                </div>
+                <div class="flex gap-3">
+                    <span class="text-[11px] font-semibold text-orange-500">4</span>
+                    <p class="text-[11px] text-gray-600 leading-relaxed">Run prediction to analyze all grid cells</p>
+                </div>
+            </div>
+            <p class="text-[10px] text-gray-400 mt-3 leading-relaxed">Weather, fuel load, and burned area data is automatically fetched for every 0.1° cell across Portugal.</p>
+        </div>
+
+        <!-- Map Layers Panel -->
+        <div class="glass p-5 mt-3">
+            <div class="label mb-3">Map Style</div>
+            <div class="map-layer-grid">
+                <button class="map-layer-btn active" id="layer-default" onclick="setMapLayer('default')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <path d="M3 9h18"/>
+                        <path d="M9 21V9"/>
+                    </svg>
+                    <span>Default</span>
+                </button>
+                <button class="map-layer-btn" id="layer-satellite" onclick="setMapLayer('satellite')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
+                        <path d="M2 12h20"/>
+                    </svg>
+                    <span>Satellite</span>
+                </button>
+                <button class="map-layer-btn" id="layer-terrain" onclick="setMapLayer('terrain')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M8 3l4 8 5-5 5 15H2L8 3z"/>
+                    </svg>
+                    <span>Terrain</span>
+                </button>
+                <button class="map-layer-btn" id="layer-topo" onclick="setMapLayer('topo')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M2 20h20"/>
+                        <path d="M5 20c0-4 2-7 4-9s4-5 4-9"/>
+                        <path d="M19 20c0-4-2-7-4-9s-4-5-4-9"/>
+                    </svg>
+                    <span>Topographic</span>
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Floating Sidebar -->
     <aside class="fixed top-4 left-4 bottom-4 z-[1000] w-72">
@@ -488,32 +601,6 @@
                     <input type="number" id="f-start-input" value="0" step="0.1" class="input-field">
                 </div>
 
-                <div class="divider"></div>
-
-                <!-- Instructions -->
-                <div>
-                    <div class="label mb-3">Instructions</div>
-                    <div class="space-y-3">
-                        <div class="flex gap-3">
-                            <span class="text-[11px] font-semibold text-orange-500">1</span>
-                            <p class="text-[11px] text-gray-600 leading-relaxed">Select fire event date & time (2015–2025)</p>
-                        </div>
-                        <div class="flex gap-3">
-                            <span class="text-[11px] font-semibold text-orange-500">2</span>
-                            <p class="text-[11px] text-gray-600 leading-relaxed">Set prediction duration in hours</p>
-                        </div>
-                        <div class="flex gap-3">
-                            <span class="text-[11px] font-semibold text-orange-500">3</span>
-                            <p class="text-[11px] text-gray-600 leading-relaxed">Adjust fire start time if needed (optional)</p>
-                        </div>
-                        <div class="flex gap-3">
-                            <span class="text-[11px] font-semibold text-orange-500">4</span>
-                            <p class="text-[11px] text-gray-600 leading-relaxed">Run prediction to analyze all grid cells</p>
-                        </div>
-                    </div>
-                    <p class="text-[10px] text-gray-400 mt-3 leading-relaxed">Weather, fuel load, and burned area data is automatically fetched for every 0.1° cell across Portugal.</p>
-                </div>
-
             </div>
 
             <div class="divider"></div>
@@ -541,11 +628,11 @@
             <div id="input-var-selector-container" class="mb-4 hidden">
                 <label class="label">Variable</label>
                 <select id="input-var-selector" class="select-field" onchange="updateInputVarDisplay()">
-                    <option value="fuel_load">Fuel Load</option>
-                    <option value="pct_3_8">PCT 3-8</option>
-                    <option value="pct_8p">PCT 8+</option>
-                    <option value="wv100_kh">Wind (100m, km/h)</option>
-                    <option value="FWI_12h">FWI 12h</option>
+                    <option value="fuel_load">Fuel Load (tons/ha)</option>
+                    <option value="pct_3_8">Percentage of area burned between 3 and 8 years ago</option>
+                    <option value="pct_8p">Percentage of area burned more than 8 years ago</option>
+                    <option value="wv100_kh">Wind at 100m (km/h)</option>
+                    <option value="FWI_12h">Fire Weather Index</option>
                 </select>
             </div>
 
@@ -649,7 +736,7 @@
 
     <!-- Bottom Results Bar -->
     <div class="fixed bottom-4 left-1/2 -translate-x-1/4 z-[1000]">
-        <div class="glass px-6 py-4">
+        <div class="glass px-8 py-3">
             <div class="flex items-center gap-8">
                 <div class="text-center">
                     <div class="stat-value text-emerald-600" id="min-ros-output">—</div>
@@ -672,6 +759,29 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
+        // --- MAP LAYERS ---
+        const mapLayers = {
+            default: L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
+                subdomains: 'abcd',
+                maxZoom: 19
+            }),
+            satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                attribution: '&copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+                maxZoom: 19
+            }),
+            terrain: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | &copy; <a href="https://opentopomap.org">OpenTopoMap</a>',
+                maxZoom: 17
+            }),
+            topo: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+                attribution: '&copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community',
+                maxZoom: 19
+            })
+        };
+
+        let currentMapLayer = 'default';
+
         // --- MAP INITIALIZATION ---
         const map = L.map('map', {
             zoomControl: false
@@ -679,11 +789,28 @@
 
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
-            subdomains: 'abcd',
-            maxZoom: 19
-        }).addTo(map);
+        // Add default layer
+        mapLayers.default.addTo(map);
+
+        function setMapLayer(layerName) {
+            // Remove current layer
+            map.removeLayer(mapLayers[currentMapLayer]);
+            
+            // Add new layer
+            mapLayers[layerName].addTo(map);
+            currentMapLayer = layerName;
+            
+            // Update button states
+            document.querySelectorAll('.map-layer-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(`layer-${layerName}`).classList.add('active');
+            
+            // Ensure grid layer stays on top
+            if (gridLayer) {
+                gridLayer.bringToFront();
+            }
+        }
 
         const API_BASE_URL = 'http://localhost:5050/api';
 
@@ -702,11 +829,11 @@
 
         // Human-readable names for input variables
         const inputVarLabels = {
-            'fuel_load': 'Fuel Load',
-            'pct_3_8': 'PCT 3-8',
-            'pct_8p': 'PCT 8+',
-            'wv100_kh': 'Wind (100m, km/h)',
-            'FWI_12h': 'FWI 12h'
+            'fuel_load': 'Fuel Load (tons/ha)',
+            'pct_3_8': 'Percentage of area burned between 3 and 8 years ago',
+            'pct_8p': 'Percentage of area burned more than 8 years ago',
+            'wv100_kh': 'Wind at 100m (km/h)',
+            'FWI_12h': 'Fire Weather Index'
         };
 
         // Color stops for ROS (green to red)
@@ -1025,7 +1152,7 @@
                 const rect = L.rectangle(bounds, {
                     color: color,
                     fillColor: color,
-                    fillOpacity: 0.6,
+                    fillOpacity: 0.5,
                     weight: 0.5
                 }).bindPopup(popupContent);
 

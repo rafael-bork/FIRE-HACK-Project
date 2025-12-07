@@ -38,10 +38,6 @@ def calculate_and_append_master(start_time, duration, mins_since_fire_start, mas
         raise ValueError(f"Faltando colunas: {missing_cols}")
     X = X[model.get_booster().feature_names]
 
-    # Debugging: print row going into model
-    print("row 100 going into model:")
-    print(X.iloc[100].to_dict())
-
     # Fazer previsões
     predictions = model.predict(X)
 
