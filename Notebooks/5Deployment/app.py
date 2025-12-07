@@ -65,7 +65,7 @@ def predict_grid():
         # ------------------- Verificar se já existem dados válidos para todas as durations -------------------
         data_exists = False
         cols_to_check = ['fuel_load', 'pct_3_8', 'pct_8p', 
-                 'wv100_kh', 'FWI_12h', 'predictions', 'linear_pred']
+                 'wv100_kh', 'FWI_12h', 'log_pred', 'linear_pred']
 
         if ds_master is not None:
             valid = True
@@ -136,7 +136,7 @@ def predict_grid():
         model_inputs = model_inputs[mask]
         
         # Select prediction column based on model type
-        pred_col = 'predictions' if model_type == 'complex' else 'linear_pred'
+        pred_col = 'linear_pred' if model_type == 'complex' else 'linear_pred' # isto ta errado !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         
         # Input variable columns to include in response
         input_var_cols = ['fuel_load', 'pct_3_8', 'pct_8p', 'wv100_kh', 'FWI_12h']

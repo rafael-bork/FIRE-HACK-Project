@@ -400,11 +400,12 @@
                 <div class="label mb-3">Rate of Spread (m/hr)</div>
                 <div class="gradient-bar"></div>
                 <div class="gradient-labels">
-                    <span>200</span>
-                    <span>650</span>
-                    <span>1100</span>
-                    <span>1550</span>
+                    <span>0</span>
+                    <span>500</span>
+                    <span>1000</span>
+                    <span>1500</span>
                     <span>2000</span>
+                    <span>2500</span>
                 </div>
             </div>
 
@@ -527,8 +528,8 @@
         }
 
         function getColorForROS(ros) {
-            const value = Math.max(200, Math.min(2000, ros));
-            const t = (value - 200) / (2000 - 200);
+            const value = Math.max(0, Math.min(2500, ros));
+            const t = value / 2500;
             return interpolateColor(t, rosColorStops);
         }
 
@@ -616,8 +617,8 @@
             currentPredictions.forEach(pred => {
                 const lat = pred.lat;
                 const lon = pred.lon;
-                const rosHour = pred.prediction * 60;
-                const errorHour = pred.error_estimate * 60;
+                const rosHour = pred.prediction;
+                const errorHour = pred.error_estimate;
                 
                 let color;
                 if (currentViewMode === 'ros') {
@@ -741,7 +742,7 @@
                     document.getElementById('successful-cells').innerHTML = successfulCells;
 
                     if (currentPredictions.length > 0) {
-                        const rosValuesHour = currentPredictions.map(p => p.prediction * 60);
+                        const rosValuesHour = currentPredictions.map(p => p.prediction);
                         const avgRos = rosValuesHour.reduce((a, b) => a + b, 0) / rosValuesHour.length;
                         const maxRos = Math.max(...rosValuesHour);
 

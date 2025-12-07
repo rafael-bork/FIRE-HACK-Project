@@ -24,15 +24,12 @@ def calculate_and_append_master(start_time, duration, mins_since_fire_start, mas
 
     rename_dict = {
         'duration_hours': 'duration_p',
-        'sW_100': 'sW_100_av',
         'pct_8p': '8_ny_fir_p',
         'pct_3_8': '3_8y_fir_p',
         'fuel_load': 'f_load_av',
         'fstart': 'f_start',
         'FWI_12h': 'FWI_12h_av',
-        'wv100_kh': 'wv100_k_av',
-        'rh_2m': 'rh_2m_av',
-        'wdir_950': 'wdi_950_av'
+        'wv100_kh': 'wv100_k_av'
     }
 
     X = model_inputs.drop(columns=['latitude', 'longitude', 's_time']).rename(columns=rename_dict)
@@ -40,9 +37,17 @@ def calculate_and_append_master(start_time, duration, mins_since_fire_start, mas
     if missing_cols:
         raise ValueError(f"Faltando colunas: {missing_cols}")
     X = X[model.get_booster().feature_names]
+
+    # Debugging: print row going into model
+    print("row 100 going into model:")
+    print(X.iloc[100].to_dict())
+
+    # Fazer previsões
     predictions = model.predict(X)
-    model_inputs['predictions'] = predictions
-    model_inputs['linear_pred'] = 10**(predictions / 5) - 1
+
+    model_inputs['log_pred'] = predictions # log scale
+    model_inputs['linear_pred'] = 10**(predictions / 5) - 1 # linear scale
+
     model_inputs = model_inputs.sort_values(by=["duration_hours", "latitude", "longitude"])
 
     # ------------------- Transformar em xarray -------------------
@@ -55,7 +60,7 @@ def calculate_and_append_master(start_time, duration, mins_since_fire_start, mas
 
     dims = ('s_time', 'latitude', 'longitude', 'duration_hours', 'fstart')
     variables = ['fuel_load', 'pct_3_8', 'pct_8p', 'wv100_kh',
-                  'FWI_12h', 'predictions', 'linear_pred']
+                  'FWI_12h', 'log_pred', 'linear_pred']
 
     ds_new = xr.Dataset()
     for var in variables:
