@@ -24,6 +24,7 @@ def predict_grid():
     """
     Main prediction endpoint that processes the grid prediction request.
     Expects JSON with: datetime, model, f_start, duration_p
+    Returns predictions organized by duration hour.
     """
     try:
         # Get data from request
@@ -46,7 +47,7 @@ def predict_grid():
         if not (MIN_DATE <= start_time <= MAX_DATE):
             return jsonify({
                 'success': False,
-                'error': 'Date must be between Janurary 1st of 2015 and 2 weeks before the present time.'
+                'error': 'Date must be between January 1st of 2015 and 2 weeks before the present time.'
             }), 400
 
 
@@ -136,34 +137,89 @@ def predict_grid():
         model_inputs = model_inputs[mask]
         
         # Select prediction column based on model type
-        pred_col = 'linear_pred' if model_type == 'complex' else 'linear_pred' # isto ta errado !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        pred_col = 'linear_pred' if model_type == 'complex' else 'linear_pred'
         
         # Input variable columns to include in response
         input_var_cols = ['fuel_load', 'pct_3_8', 'pct_8p', 'wv100_kh', 'FWI_12h']
         
-        # Prepare predictions for response
-        predictions = []
-        total_cells = len(model_inputs)
+        # Organize predictions by duration
+        predictions_by_duration = {}
+        total_cells = 0
         successful_cells = 0
         
-        for _, row in model_inputs.iterrows():
-            pred_value = row.get(pred_col)
-            if pd.notna(pred_value):
-                pred_entry = {
-                    'lat': float(row['latitude']),
-                    'lon': float(row['longitude']),
-                    'prediction': float(pred_value),
-                    'error_estimate': float(pred_value * 0.1),  # Placeholder error estimate
-                    'input_vars': {}
+        # Get unique durations
+        unique_durations = sorted(model_inputs['duration_hours'].unique())
+        
+        for dur in unique_durations:
+            dur_int = int(dur)
+            df_dur = model_inputs[model_inputs['duration_hours'] == dur]
+            predictions_by_duration[dur_int] = []
+            
+            for _, row in df_dur.iterrows():
+                total_cells += 1
+                pred_value = row.get(pred_col)
+                if pd.notna(pred_value):
+                    # Calculate displacement (cumulative distance traveled)
+                    displacement = float(pred_value) * dur_int
+                    
+                    pred_entry = {
+                        'lat': float(row['latitude']),
+                        'lon': float(row['longitude']),
+                        'ros': float(pred_value),  # Rate of spread (m/hr)
+                        'displacement': displacement,  # Cumulative distance (m)
+                        'error_estimate': float(pred_value * 0.1),
+                        'input_vars': {}
+                    }
+                    
+                    # Add input variables
+                    for col in input_var_cols:
+                        val = row.get(col)
+                        pred_entry['input_vars'][col] = float(val) if pd.notna(val) else None
+                    
+                    predictions_by_duration[dur_int].append(pred_entry)
+                    successful_cells += 1
+        
+        # Calculate increments between durations (both displacement and ROS)
+        increments_by_duration = {}
+        ros_increments_by_duration = {}
+        duration_list = sorted(predictions_by_duration.keys())
+        
+        for i, dur in enumerate(duration_list):
+            if i == 0:
+                # First duration: increment equals the value itself
+                increments_by_duration[dur] = {
+                    (p['lat'], p['lon']): p['displacement']
+                    for p in predictions_by_duration[dur]
                 }
-                
-                # Add input variables
-                for col in input_var_cols:
-                    val = row.get(col)
-                    pred_entry['input_vars'][col] = float(val) if pd.notna(val) else None
-                
-                predictions.append(pred_entry)
-                successful_cells += 1
+                ros_increments_by_duration[dur] = {
+                    (p['lat'], p['lon']): p['ros']
+                    for p in predictions_by_duration[dur]
+                }
+            else:
+                prev_dur = duration_list[i - 1]
+                prev_displacements = {
+                    (p['lat'], p['lon']): p['displacement']
+                    for p in predictions_by_duration[prev_dur]
+                }
+                prev_ros = {
+                    (p['lat'], p['lon']): p['ros']
+                    for p in predictions_by_duration[prev_dur]
+                }
+                increments_by_duration[dur] = {}
+                ros_increments_by_duration[dur] = {}
+                for p in predictions_by_duration[dur]:
+                    key = (p['lat'], p['lon'])
+                    prev_disp = prev_displacements.get(key, 0)
+                    increments_by_duration[dur][key] = p['displacement'] - prev_disp
+                    prev_ros_val = prev_ros.get(key, 0)
+                    ros_increments_by_duration[dur][key] = p['ros'] - prev_ros_val
+        
+        # Add increments to each prediction
+        for dur in predictions_by_duration:
+            for p in predictions_by_duration[dur]:
+                key = (p['lat'], p['lon'])
+                p['increment'] = increments_by_duration[dur].get(key, p['displacement'])
+                p['ros_increment'] = ros_increments_by_duration[dur].get(key, p['ros'])
         
         # Generate TIFF outputs
         df_slice = model_inputs.copy()
@@ -173,7 +229,8 @@ def predict_grid():
         
         return jsonify({
             'success': True,
-            'predictions': predictions,
+            'predictions_by_duration': predictions_by_duration,
+            'durations': duration_list,
             'total_cells': total_cells,
             'successful_cells': successful_cells,
             'input_var_names': input_var_cols
@@ -181,6 +238,8 @@ def predict_grid():
         
     except Exception as e:
         print(f"Error in predict_grid: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({
             'success': False,
             'error': str(e)

@@ -31,7 +31,6 @@
             overflow: hidden;
         }
 
-        /* Fullscreen map */
         #map {
             position: fixed;
             inset: 0;
@@ -42,7 +41,6 @@
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
         }
 
-        /* Glass panels */
         .glass {
             background: var(--glass-bg);
             backdrop-filter: blur(32px);
@@ -52,7 +50,6 @@
             box-shadow: var(--glass-shadow);
         }
 
-        /* Form inputs */
         .input-field {
             background: rgba(255, 255, 255, 0.5);
             border: 1px solid rgba(0, 0, 0, 0.06);
@@ -71,7 +68,6 @@
             box-shadow: 0 0 0 3px var(--accent-light);
         }
 
-        /* Select */
         .select-field {
             background: rgba(255, 255, 255, 0.5);
             border: 1px solid rgba(0, 0, 0, 0.06);
@@ -95,7 +91,6 @@
             background-color: rgba(255, 255, 255, 0.8);
         }
 
-        /* Button */
         .btn-primary {
             background: var(--accent);
             color: white;
@@ -119,7 +114,6 @@
             transform: translateY(0);
         }
 
-        /* Labels */
         .label {
             font-size: 12px;
             font-weight: 800;
@@ -136,7 +130,6 @@
             margin-top: 6px;
         }
 
-        /* Stats */
         .stat-value {
             font-size: 22px;
             font-weight: 500;
@@ -153,15 +146,18 @@
             margin-top: 4px;
         }
 
-        /* Continuous Gradient Legend */
         .gradient-bar {
             height: 12px;
             border-radius: 6px;
             background: linear-gradient(to right, #22c55e, #84cc16, #eab308, #f97316, #ef4444, #b91c1c);
         }
 
+        .gradient-bar.displacement {
+            background: linear-gradient(to right, #22c55e, #84cc16, #eab308, #f97316, #ef4444, #b91c1c);
+        }
+
         .gradient-bar.input-var {
-            background: linear-gradient(to right, #3b82f6, #8b5cf6, #d946ef);
+            background: linear-gradient(to right, #22c55e, #84cc16, #eab308, #f97316, #ef4444, #b91c1c);
         }
 
         .gradient-labels {
@@ -175,7 +171,6 @@
             color: var(--text-muted);
         }
 
-        /* Toggle Switch */
         .toggle-container {
             display: flex;
             background: rgba(0, 0, 0, 0.05);
@@ -203,7 +198,6 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
 
-        /* Loader */
         .loader {
             width: 20px;
             height: 20px;
@@ -218,7 +212,6 @@
             to { transform: rotate(360deg); }
         }
 
-        /* Popup styling */
         .leaflet-popup-content-wrapper {
             background: var(--glass-bg);
             backdrop-filter: blur(20px);
@@ -233,7 +226,6 @@
             background: var(--glass-bg);
         }
 
-        /* Scrollbar */
         ::-webkit-scrollbar {
             width: 4px;
         }
@@ -247,14 +239,12 @@
             border-radius: 2px;
         }
 
-        /* Divider */
         .divider {
             height: 1px;
             background: rgba(0, 0, 0, 0.06);
             margin: 16px 0;
         }
 
-        /* Status indicator */
         .status-dot {
             width: 6px;
             height: 6px;
@@ -279,6 +269,160 @@
 
         .hidden {
             display: none;
+        }
+
+        /* Timeline Styles */
+        .timeline-container {
+            padding: 0 4px;
+        }
+
+        .timeline-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(0, 0, 0, 0.1);
+            outline: none;
+            cursor: pointer;
+        }
+
+        .timeline-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(232, 93, 4, 0.4);
+            transition: transform 0.15s ease;
+        }
+
+        .timeline-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+        }
+
+        .timeline-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 8px rgba(232, 93, 4, 0.4);
+        }
+
+        .timeline-ticks {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0 0 0;
+        }
+
+        .timeline-tick {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .timeline-tick:hover .tick-label {
+            color: var(--accent);
+        }
+
+        .tick-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.15);
+            margin-bottom: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .timeline-tick.active .tick-dot {
+            background: var(--accent);
+            transform: scale(1.3);
+        }
+
+        .tick-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-muted);
+            transition: color 0.2s ease;
+        }
+
+        .timeline-tick.active .tick-label {
+            color: var(--accent);
+        }
+
+        .duration-display {
+            text-align: center;
+            padding: 8px 0;
+        }
+
+        .duration-value {
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--accent);
+            line-height: 1;
+        }
+
+        .duration-unit {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 4px;
+        }
+
+        /* Playback controls */
+        .playback-controls {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .playback-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(0, 0, 0, 0.05);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .playback-btn:hover {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .playback-btn.play-btn {
+            width: 44px;
+            height: 44px;
+            background: var(--accent);
+        }
+
+        .playback-btn.play-btn:hover {
+            background: #d45203;
+            transform: scale(1.05);
+        }
+
+        .playback-btn svg {
+            width: 16px;
+            height: 16px;
+            color: var(--text-secondary);
+        }
+
+        .playback-btn.play-btn svg {
+            color: white;
+            width: 18px;
+            height: 18px;
         }
     </style>
 </head>
@@ -374,12 +518,22 @@
 
             <div class="divider"></div>
 
-            <!-- View Toggle -->
+            <!-- Display Mode Toggle -->
             <div class="mb-4">
                 <div class="label mb-3">Display Layer</div>
                 <div class="toggle-container">
                     <button class="toggle-btn active" id="toggle-ros" onclick="setViewMode('ros')">ROS</button>
-                    <button class="toggle-btn" id="toggle-inputs" onclick="setViewMode('inputs')">Input Vars</button>
+                    <button class="toggle-btn" id="toggle-displacement" onclick="setViewMode('displacement')">Distance</button>
+                    <button class="toggle-btn" id="toggle-inputs" onclick="setViewMode('inputs')">Inputs</button>
+                </div>
+            </div>
+
+            <!-- Metric Toggle (for ROS/Displacement modes) -->
+            <div id="metric-toggle-container" class="mb-4">
+                <div class="label mb-3">Metric</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn active" id="toggle-cumulative" onclick="setMetricMode('cumulative')">Cumulative</button>
+                    <button class="toggle-btn" id="toggle-increment" onclick="setMetricMode('increment')">Increment</button>
                 </div>
             </div>
 
@@ -395,11 +549,11 @@
                 </select>
             </div>
 
-            <!-- Continuous Gradient Legend - ROS -->
+            <!-- Legend - ROS -->
             <div class="mb-4" id="legend-ros">
-                <div class="label mb-3">Rate of Spread (m/hr)</div>
+                <div class="label mb-3" id="ros-legend-title">Rate of Spread (m/hr)</div>
                 <div class="gradient-bar"></div>
-                <div class="gradient-labels">
+                <div class="gradient-labels" id="ros-legend-labels">
                     <span>0</span>
                     <span>500</span>
                     <span>1000</span>
@@ -409,7 +563,20 @@
                 </div>
             </div>
 
-            <!-- Continuous Gradient Legend - Input Variables -->
+            <!-- Legend - Displacement -->
+            <div class="mb-4 hidden" id="legend-displacement">
+                <div class="label mb-3" id="displacement-legend-title">Distance Traveled (m)</div>
+                <div class="gradient-bar displacement"></div>
+                <div class="gradient-labels" id="displacement-legend-labels">
+                    <span>0</span>
+                    <span>—</span>
+                    <span>—</span>
+                    <span>—</span>
+                    <span>Max</span>
+                </div>
+            </div>
+
+            <!-- Legend - Input Variables -->
             <div class="mb-4 hidden" id="legend-inputs">
                 <div class="label mb-3" id="input-var-legend-title">Fuel Load</div>
                 <div class="gradient-bar input-var"></div>
@@ -429,28 +596,74 @@
         </div>
     </aside>
 
+    <!-- Timeline Panel (hidden until predictions are loaded) -->
+    <div class="fixed bottom-4 right-4 z-[1000] hidden" id="timeline-panel">
+        <div class="glass px-6 py-5" style="width: 320px;">
+            <div class="label mb-2">Timeline</div>
+            
+            <!-- Duration Display -->
+            <div class="duration-display">
+                <div class="duration-value" id="current-duration-display">1</div>
+                <div class="duration-unit">hour<span id="duration-plural"></span></div>
+            </div>
+            
+            <!-- Timeline Slider -->
+            <div class="timeline-container">
+                <input type="range" 
+                       id="timeline-slider" 
+                       class="timeline-slider" 
+                       min="1" 
+                       max="1" 
+                       value="1" 
+                       step="1"
+                       oninput="onTimelineChange(this.value)">
+                <div class="timeline-ticks" id="timeline-ticks"></div>
+            </div>
+            
+            <!-- Playback Controls -->
+            <div class="playback-controls">
+                <button class="playback-btn" onclick="stepBackward()" title="Previous">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 20L9 12l10-8v16z"/>
+                        <line x1="5" y1="4" x2="5" y2="20"/>
+                    </svg>
+                </button>
+                <button class="playback-btn play-btn" id="play-btn" onclick="togglePlayback()" title="Play">
+                    <svg viewBox="0 0 24 24" fill="currentColor" id="play-icon">
+                        <path d="M8 5v14l11-7z"/>
+                    </svg>
+                    <svg viewBox="0 0 24 24" fill="currentColor" id="pause-icon" class="hidden">
+                        <rect x="6" y="4" width="4" height="16"/>
+                        <rect x="14" y="4" width="4" height="16"/>
+                    </svg>
+                </button>
+                <button class="playback-btn" onclick="stepForward()" title="Next">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M5 4l10 8-10 8V4z"/>
+                        <line x1="19" y1="4" x2="19" y2="20"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Bottom Results Bar -->
     <div class="fixed bottom-4 left-1/2 -translate-x-1/4 z-[1000]">
         <div class="glass px-6 py-4">
             <div class="flex items-center gap-8">
                 <div class="text-center">
-                    <div class="stat-value text-gray-700" id="total-cells">—</div>
-                    <div class="stat-label">Cells</div>
-                </div>
-                <div class="w-px h-10 bg-black/5"></div>
-                <div class="text-center">
-                    <div class="stat-value text-emerald-600" id="successful-cells">—</div>
-                    <div class="stat-label">Success</div>
+                    <div class="stat-value text-emerald-600" id="min-ros-output">—</div>
+                    <div class="stat-label" id="min-label">Min m/hr</div>
                 </div>
                 <div class="w-px h-10 bg-black/5"></div>
                 <div class="text-center">
                     <div class="stat-value text-orange-600" id="avg-ros-output">—</div>
-                    <div class="stat-label">Avg m/hr</div>
+                    <div class="stat-label" id="avg-label">Avg m/hr</div>
                 </div>
                 <div class="w-px h-10 bg-black/5"></div>
                 <div class="text-center">
                     <div class="stat-value text-red-500" id="max-ros-output">—</div>
-                    <div class="stat-label">Max m/hr</div>
+                    <div class="stat-label" id="max-label">Max m/hr</div>
                 </div>
             </div>
         </div>
@@ -474,10 +687,18 @@
 
         const API_BASE_URL = 'http://localhost:5050/api';
 
+        // State
         let gridLayer = null;
-        let currentPredictions = [];
-        let currentViewMode = 'ros';
+        let predictionsByDuration = {};
+        let availableDurations = [];
+        let currentDuration = 1;
+        let currentViewMode = 'ros';  // 'ros', 'displacement', 'inputs'
+        let currentMetricMode = 'cumulative';  // 'cumulative', 'increment'
         let inputVarRanges = {};
+        let displacementRange = { min: 0, max: 1 };
+        let rosRange = { min: 0, max: 2500 };
+        let isPlaying = false;
+        let playbackInterval = null;
 
         // Human-readable names for input variables
         const inputVarLabels = {
@@ -488,21 +709,34 @@
             'FWI_12h': 'FWI 12h'
         };
 
-        // Continuous gradient color stops for ROS (green to red)
+        // Color stops for ROS (green to red)
         const rosColorStops = [
-            { pos: 0, r: 34, g: 197, b: 94 },      // #22c55e - Green
-            { pos: 0.2, r: 132, g: 204, b: 22 },   // #84cc16 - Lime
-            { pos: 0.4, r: 234, g: 179, b: 8 },    // #eab308 - Yellow
-            { pos: 0.6, r: 249, g: 115, b: 22 },   // #f97316 - Orange
-            { pos: 0.8, r: 239, g: 68, b: 68 },    // #ef4444 - Red
-            { pos: 1, r: 185, g: 28, b: 28 }       // #b91c1c - Dark Red
+            { pos: 0, r: 34, g: 197, b: 94 },
+            { pos: 0.2, r: 132, g: 204, b: 22 },
+            { pos: 0.4, r: 234, g: 179, b: 8 },
+            { pos: 0.6, r: 249, g: 115, b: 22 },
+            { pos: 0.8, r: 239, g: 68, b: 68 },
+            { pos: 1, r: 185, g: 28, b: 28 }
         ];
 
-        // Continuous gradient color stops for input variables (blue to purple to pink)
+        // Color stops for displacement (green to red, same as ROS)
+        const displacementColorStops = [
+            { pos: 0, r: 34, g: 197, b: 94 },
+            { pos: 0.2, r: 132, g: 204, b: 22 },
+            { pos: 0.4, r: 234, g: 179, b: 8 },
+            { pos: 0.6, r: 249, g: 115, b: 22 },
+            { pos: 0.8, r: 239, g: 68, b: 68 },
+            { pos: 1, r: 185, g: 28, b: 28 }
+        ];
+
+        // Color stops for input variables (green to red, same as ROS)
         const inputColorStops = [
-            { pos: 0, r: 59, g: 130, b: 246 },     // #3b82f6 - Blue
-            { pos: 0.5, r: 139, g: 92, b: 246 },   // #8b5cf6 - Purple
-            { pos: 1, r: 217, g: 70, b: 239 }      // #d946ef - Pink
+            { pos: 0, r: 34, g: 197, b: 94 },
+            { pos: 0.2, r: 132, g: 204, b: 22 },
+            { pos: 0.4, r: 234, g: 179, b: 8 },
+            { pos: 0.6, r: 249, g: 115, b: 22 },
+            { pos: 0.8, r: 239, g: 68, b: 68 },
+            { pos: 1, r: 185, g: 28, b: 28 }
         ];
 
         function interpolateColor(t, colorStops) {
@@ -533,6 +767,14 @@
             return interpolateColor(t, rosColorStops);
         }
 
+        function getColorForDisplacement(disp) {
+            if (displacementRange.max === displacementRange.min) {
+                return interpolateColor(0.5, displacementColorStops);
+            }
+            const t = (disp - displacementRange.min) / (displacementRange.max - displacementRange.min);
+            return interpolateColor(Math.max(0, Math.min(1, t)), displacementColorStops);
+        }
+
         function getColorForInputVar(value, varName) {
             const range = inputVarRanges[varName];
             if (!range || range.max === range.min) {
@@ -545,30 +787,73 @@
         function setViewMode(mode) {
             currentViewMode = mode;
             
-            // Update toggle buttons
             document.getElementById('toggle-ros').classList.toggle('active', mode === 'ros');
+            document.getElementById('toggle-displacement').classList.toggle('active', mode === 'displacement');
             document.getElementById('toggle-inputs').classList.toggle('active', mode === 'inputs');
             
+            // Show/hide metric toggle (only for ros and displacement)
+            document.getElementById('metric-toggle-container').classList.toggle('hidden', mode === 'inputs');
+            
             // Show/hide input variable selector
-            document.getElementById('input-var-selector-container').classList.toggle('hidden', mode === 'ros');
+            document.getElementById('input-var-selector-container').classList.toggle('hidden', mode !== 'inputs');
             
             // Show/hide legends
-            document.getElementById('legend-ros').classList.toggle('hidden', mode === 'inputs');
-            document.getElementById('legend-inputs').classList.toggle('hidden', mode === 'ros');
+            document.getElementById('legend-ros').classList.toggle('hidden', mode !== 'ros');
+            document.getElementById('legend-displacement').classList.toggle('hidden', mode !== 'displacement');
+            document.getElementById('legend-inputs').classList.toggle('hidden', mode !== 'inputs');
             
-            // Redraw grid if we have predictions
-            if (currentPredictions.length > 0) {
+            // Update stats labels
+            updateStatsLabels();
+            
+            if (Object.keys(predictionsByDuration).length > 0) {
                 drawGrid();
+                updateStats();
             }
+        }
+
+        function setMetricMode(mode) {
+            currentMetricMode = mode;
+            
+            document.getElementById('toggle-cumulative').classList.toggle('active', mode === 'cumulative');
+            document.getElementById('toggle-increment').classList.toggle('active', mode === 'increment');
+            
+            // Update legend title
+            if (currentViewMode === 'ros') {
+                const title = mode === 'cumulative' ? 'Rate of Spread (m/hr)' : 'ROS Increment (m/hr)';
+                document.getElementById('ros-legend-title').innerText = title;
+            } else if (currentViewMode === 'displacement') {
+                const title = mode === 'cumulative' ? 'Distance Traveled (m)' : 'Distance Increment (m)';
+                document.getElementById('displacement-legend-title').innerText = title;
+            }
+            
+            updateStatsLabels();
+            
+            if (Object.keys(predictionsByDuration).length > 0) {
+                calculateRanges();
+                updateLegendLabels();
+                drawGrid();
+                updateStats();
+            }
+        }
+
+        function updateStatsLabels() {
+            let unit = 'm/hr';
+            if (currentViewMode === 'displacement') {
+                unit = 'm';
+            } else if (currentViewMode === 'inputs') {
+                unit = '';
+            }
+            
+            document.getElementById('min-label').innerText = `Min ${unit}`;
+            document.getElementById('avg-label').innerText = `Avg ${unit}`;
+            document.getElementById('max-label').innerText = `Max ${unit}`;
         }
 
         function updateInputVarDisplay() {
             const varName = document.getElementById('input-var-selector').value;
             
-            // Update legend title
             document.getElementById('input-var-legend-title').innerText = inputVarLabels[varName] || varName;
             
-            // Update legend labels
             const range = inputVarRanges[varName];
             if (range) {
                 const labels = document.getElementById('input-var-legend-labels');
@@ -582,20 +867,62 @@
                 `;
             }
             
-            // Redraw grid
-            if (currentPredictions.length > 0) {
+            if (Object.keys(predictionsByDuration).length > 0) {
                 drawGrid();
+                updateStats();
             }
         }
 
-        function calculateInputVarRanges(predictions) {
+        function calculateRanges() {
+            // Calculate ranges across all durations for consistent coloring
+            let allRos = [];
+            let allDisplacement = [];
+            let allIncrements = [];
+            
+            for (const dur of availableDurations) {
+                const predictions = predictionsByDuration[dur] || [];
+                predictions.forEach(p => {
+                    allRos.push(p.ros);
+                    allDisplacement.push(p.displacement);
+                    if (p.increment !== undefined) {
+                        allIncrements.push(p.increment);
+                    }
+                });
+            }
+            
+            if (allRos.length > 0) {
+                rosRange = {
+                    min: 0,
+                    max: Math.max(...allRos)
+                };
+            }
+            
+            if (currentMetricMode === 'increment' && allIncrements.length > 0) {
+                displacementRange = {
+                    min: 0,
+                    max: Math.max(...allIncrements)
+                };
+            } else if (allDisplacement.length > 0) {
+                displacementRange = {
+                    min: 0,
+                    max: Math.max(...allDisplacement)
+                };
+            }
+            
+            // Input variable ranges
             inputVarRanges = {};
             const varNames = ['fuel_load', 'pct_3_8', 'pct_8p', 'wv100_kh', 'FWI_12h'];
             
             varNames.forEach(varName => {
-                const values = predictions
-                    .map(p => p.input_vars ? p.input_vars[varName] : null)
-                    .filter(v => v !== null && v !== undefined);
+                const values = [];
+                for (const dur of availableDurations) {
+                    const predictions = predictionsByDuration[dur] || [];
+                    predictions.forEach(p => {
+                        if (p.input_vars && p.input_vars[varName] !== null && p.input_vars[varName] !== undefined) {
+                            values.push(p.input_vars[varName]);
+                        }
+                    });
+                }
                 
                 if (values.length > 0) {
                     inputVarRanges[varName] = {
@@ -606,25 +933,50 @@
             });
         }
 
+        function updateLegendLabels() {
+            // Displacement legend (dynamic)
+            const dispLabels = document.getElementById('displacement-legend-labels');
+            const dispMax = displacementRange.max;
+            const dispStep = dispMax / 4;
+            dispLabels.innerHTML = `
+                <span>0</span>
+                <span>${Math.round(dispStep)}</span>
+                <span>${Math.round(dispStep * 2)}</span>
+                <span>${Math.round(dispStep * 3)}</span>
+                <span>${Math.round(dispMax)}</span>
+            `;
+            
+            // Update input var legend
+            updateInputVarDisplay();
+        }
+
         function drawGrid() {
             if (gridLayer) {
                 map.removeLayer(gridLayer);
             }
 
+            const predictions = predictionsByDuration[currentDuration] || [];
+            if (predictions.length === 0) return;
+
             const rectangles = [];
             const selectedVar = document.getElementById('input-var-selector').value;
 
-            currentPredictions.forEach(pred => {
+            predictions.forEach(pred => {
                 const lat = pred.lat;
                 const lon = pred.lon;
-                const rosHour = pred.prediction;
-                const errorHour = pred.error_estimate;
                 
                 let color;
+                let displayValue;
+                
                 if (currentViewMode === 'ros') {
-                    color = getColorForROS(rosHour);
+                    displayValue = currentMetricMode === 'increment' ? (pred.ros_increment || 0) : pred.ros;
+                    color = getColorForROS(Math.abs(displayValue));
+                } else if (currentViewMode === 'displacement') {
+                    displayValue = currentMetricMode === 'increment' ? pred.increment : pred.displacement;
+                    color = getColorForDisplacement(displayValue);
                 } else {
                     const varValue = pred.input_vars ? pred.input_vars[selectedVar] : null;
+                    displayValue = varValue;
                     color = varValue !== null ? getColorForInputVar(varValue, selectedVar) : '#cccccc';
                 }
 
@@ -641,13 +993,15 @@
                             <div>Lat: ${lat.toFixed(4)}</div>
                             <div>Lon: ${lon.toFixed(4)}</div>
                             <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #eee;">
-                                <div style="font-weight: 600; color: #1a1a1a; margin-bottom: 4px;">Prediction</div>
-                                <div style="color: #e85d04; font-weight: 600;">ROS: ${rosHour.toFixed(1)} m/hr</div>
-                                <div>Error: ±${errorHour.toFixed(1)}</div>
+                                <div style="font-weight: 600; color: #1a1a1a; margin-bottom: 4px;">Prediction (${currentDuration}h)</div>
+                                <div style="color: #e85d04; font-weight: 600;">ROS: ${pred.ros.toFixed(1)} m/hr</div>
+                                <div style="color: #f97316;">ROS Δ: ${(pred.ros_increment || 0).toFixed(1)} m/hr</div>
+                                <div style="color: #3b82f6;">Distance: ${pred.displacement.toFixed(1)} m</div>
+                                <div style="color: #8b5cf6;">Distance Δ: ${(pred.increment || 0).toFixed(1)} m</div>
+                                <div style="color: #888;">Error: ±${pred.error_estimate.toFixed(1)}</div>
                             </div>
                 `;
                 
-                // Add input variables section
                 if (pred.input_vars) {
                     popupContent += `
                             <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #eee;">
@@ -656,8 +1010,8 @@
                     
                     for (const [key, value] of Object.entries(pred.input_vars)) {
                         const label = inputVarLabels[key] || key;
-                        const displayValue = value !== null ? value.toFixed(2) : 'N/A';
-                        popupContent += `<div>${label}: ${displayValue}</div>`;
+                        const dispVal = value !== null ? value.toFixed(2) : 'N/A';
+                        popupContent += `<div>${label}: ${dispVal}</div>`;
                     }
                     
                     popupContent += `</div>`;
@@ -681,6 +1035,137 @@
             gridLayer = L.layerGroup(rectangles).addTo(map);
         }
 
+        function updateStats() {
+            const predictions = predictionsByDuration[currentDuration] || [];
+            
+            if (predictions.length === 0) {
+                document.getElementById('min-ros-output').innerText = '—';
+                document.getElementById('avg-ros-output').innerText = '—';
+                document.getElementById('max-ros-output').innerText = '—';
+                return;
+            }
+            
+            let values;
+            if (currentViewMode === 'ros') {
+                values = currentMetricMode === 'increment'
+                    ? predictions.map(p => p.ros_increment || 0)
+                    : predictions.map(p => p.ros);
+            } else if (currentViewMode === 'displacement') {
+                values = currentMetricMode === 'increment' 
+                    ? predictions.map(p => p.increment || 0)
+                    : predictions.map(p => p.displacement);
+            } else {
+                const selectedVar = document.getElementById('input-var-selector').value;
+                values = predictions
+                    .map(p => p.input_vars ? p.input_vars[selectedVar] : null)
+                    .filter(v => v !== null && v !== undefined);
+            }
+            
+            if (values.length === 0) {
+                document.getElementById('min-ros-output').innerText = '—';
+                document.getElementById('avg-ros-output').innerText = '—';
+                document.getElementById('max-ros-output').innerText = '—';
+                return;
+            }
+            
+            const minVal = Math.min(...values);
+            const avgVal = values.reduce((a, b) => a + b, 0) / values.length;
+            const maxVal = Math.max(...values);
+            
+            document.getElementById('min-ros-output').innerText = minVal.toFixed(1);
+            document.getElementById('avg-ros-output').innerText = avgVal.toFixed(1);
+            document.getElementById('max-ros-output').innerText = maxVal.toFixed(1);
+        }
+
+        function setupTimeline() {
+            const slider = document.getElementById('timeline-slider');
+            const ticksContainer = document.getElementById('timeline-ticks');
+            
+            if (availableDurations.length <= 1) {
+                document.getElementById('timeline-panel').classList.add('hidden');
+                return;
+            }
+            
+            document.getElementById('timeline-panel').classList.remove('hidden');
+            
+            const minDur = Math.min(...availableDurations);
+            const maxDur = Math.max(...availableDurations);
+            
+            slider.min = minDur;
+            slider.max = maxDur;
+            slider.value = currentDuration;
+            
+            // Create tick marks
+            ticksContainer.innerHTML = '';
+            availableDurations.forEach(dur => {
+                const tick = document.createElement('div');
+                tick.className = `timeline-tick${dur === currentDuration ? ' active' : ''}`;
+                tick.innerHTML = `
+                    <div class="tick-dot"></div>
+                    <span class="tick-label">${dur}h</span>
+                `;
+                tick.onclick = () => onTimelineChange(dur);
+                ticksContainer.appendChild(tick);
+            });
+            
+            updateDurationDisplay();
+        }
+
+        function updateDurationDisplay() {
+            document.getElementById('current-duration-display').innerText = currentDuration;
+            document.getElementById('duration-plural').innerText = currentDuration === 1 ? '' : 's';
+            
+            // Update tick active states
+            const ticks = document.querySelectorAll('.timeline-tick');
+            ticks.forEach((tick, i) => {
+                tick.classList.toggle('active', availableDurations[i] === currentDuration);
+            });
+        }
+
+        function onTimelineChange(value) {
+            currentDuration = parseInt(value);
+            document.getElementById('timeline-slider').value = currentDuration;
+            updateDurationDisplay();
+            drawGrid();
+            updateStats();
+        }
+
+        function stepBackward() {
+            const idx = availableDurations.indexOf(currentDuration);
+            if (idx > 0) {
+                onTimelineChange(availableDurations[idx - 1]);
+            }
+        }
+
+        function stepForward() {
+            const idx = availableDurations.indexOf(currentDuration);
+            if (idx < availableDurations.length - 1) {
+                onTimelineChange(availableDurations[idx + 1]);
+            }
+        }
+
+        function togglePlayback() {
+            isPlaying = !isPlaying;
+            
+            document.getElementById('play-icon').classList.toggle('hidden', isPlaying);
+            document.getElementById('pause-icon').classList.toggle('hidden', !isPlaying);
+            
+            if (isPlaying) {
+                playbackInterval = setInterval(() => {
+                    const idx = availableDurations.indexOf(currentDuration);
+                    if (idx < availableDurations.length - 1) {
+                        onTimelineChange(availableDurations[idx + 1]);
+                    } else {
+                        // Loop back to start
+                        onTimelineChange(availableDurations[0]);
+                    }
+                }, 1000);
+            } else {
+                clearInterval(playbackInterval);
+                playbackInterval = null;
+            }
+        }
+
         function setStatus(status) {
             const statusText = document.getElementById('grid-status');
             const statusDot = document.getElementById('status-dot');
@@ -696,6 +1181,11 @@
         }
 
         async function runGridPrediction() {
+            // Stop any playback
+            if (isPlaying) {
+                togglePlayback();
+            }
+            
             const datetimeValue = document.getElementById('datetime-input').value;
             const fStartValue = parseFloat(document.getElementById('f-start-input').value) || 0;
             const durationValue = parseInt(document.getElementById('duration-input').value) || 1;
@@ -709,10 +1199,9 @@
             const datetime = datetimeValue.replace('T', ' ');
 
             setStatus('Processing...');
-            document.getElementById('total-cells').innerHTML = '<div class="loader"></div>';
-            document.getElementById('successful-cells').innerHTML = '<div class="loader"></div>';
-            document.getElementById('avg-ros-output').innerText = '...';
-            document.getElementById('max-ros-output').innerText = '...';
+            document.getElementById('min-ros-output').innerHTML = '<div class="loader"></div>';
+            document.getElementById('avg-ros-output').innerHTML = '<div class="loader"></div>';
+            document.getElementById('max-ros-output').innerHTML = '<div class="loader"></div>';
 
             if (gridLayer) {
                 map.removeLayer(gridLayer);
@@ -733,33 +1222,23 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    currentPredictions = data.predictions;
-                    const totalCells = data.total_cells;
-                    const successfulCells = data.successful_cells;
+                    predictionsByDuration = data.predictions_by_duration;
+                    availableDurations = data.durations;
+                    currentDuration = availableDurations.length > 0 ? availableDurations[0] : 1;
 
                     setStatus('Complete');
-                    document.getElementById('total-cells').innerHTML = totalCells;
-                    document.getElementById('successful-cells').innerHTML = successfulCells;
 
-                    if (currentPredictions.length > 0) {
-                        const rosValuesHour = currentPredictions.map(p => p.prediction);
-                        const avgRos = rosValuesHour.reduce((a, b) => a + b, 0) / rosValuesHour.length;
-                        const maxRos = Math.max(...rosValuesHour);
-
-                        document.getElementById('avg-ros-output').innerText = avgRos.toFixed(1);
-                        document.getElementById('max-ros-output').innerText = maxRos.toFixed(1);
-
-                        // Calculate input variable ranges for coloring
-                        calculateInputVarRanges(currentPredictions);
-                        
-                        // Update input variable legend
-                        updateInputVarDisplay();
-                        
-                        // Draw the grid
+                    if (availableDurations.length > 0) {
+                        calculateRanges();
+                        updateLegendLabels();
+                        setupTimeline();
                         drawGrid();
+                        updateStats();
                     } else {
+                        document.getElementById('min-ros-output').innerText = '—';
                         document.getElementById('avg-ros-output').innerText = '—';
                         document.getElementById('max-ros-output').innerText = '—';
+                        document.getElementById('timeline-panel').classList.add('hidden');
                         setStatus('No data');
                         alert('No valid predictions. Check data availability.');
                     }
@@ -771,10 +1250,10 @@
             } catch (error) {
                 console.error('Error:', error);
                 setStatus('Error');
-                document.getElementById('total-cells').innerHTML = '—';
-                document.getElementById('successful-cells').innerHTML = '—';
+                document.getElementById('min-ros-output').innerText = '—';
                 document.getElementById('avg-ros-output').innerText = '—';
                 document.getElementById('max-ros-output').innerText = '—';
+                document.getElementById('timeline-panel').classList.add('hidden');
                 alert('Error: ' + error.message);
             }
         }
