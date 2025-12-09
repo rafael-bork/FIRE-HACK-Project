@@ -1,0 +1,407 @@
+{
+    "best_features": [
+        "duration_p",
+        "FWI_12h_av",
+        "rh_2m_av",
+        "wv_850_av",
+        "wv100_k_av",
+        "wdi_950_av",
+        "Cape_av",
+        "BLH_m_av",
+        "vwv_500_av",
+        "gT_8_7_av",
+        "wv_950_av",
+        "sW_100_av",
+        "landform",
+        "Recirc",
+        "wSv_9_av",
+        "wv10_kh_av",
+        "vwv_850_av",
+        "aspect_av",
+        "8_ny_fir_p",
+        "gT_7_5_av",
+        "f_load_av",
+        "wdi_500_av",
+        "wdi_300_av",
+        "CircVar",
+        "HDW_av",
+        "gp_850_av",
+        "1_3y_fir_p",
+        "LowCC_p_av",
+        "TotCC_p_av",
+        "rh_500_av",
+        "vwv_300_av",
+        "wdi_850_av",
+        "wSv_7_av",
+        "gT_9_8_av",
+        "t_950_av",
+        "gp_300_av",
+        "gp_500_av",
+        "t_300_av",
+        "gp_950_av",
+        "t_850_av",
+        "sW_28_av",
+        "sW_7_av",
+        "LCL_m_av",
+        "t_700_av",
+        "gT_5_3_av",
+        "sW_1m_av"
+    ],
+    "best_r2_score": 0.4613352798355761,
+    "best_model_params": {
+        "memory": null,
+        "steps": [
+            [
+                "imputer",
+                "SimpleImputer(strategy='median')"
+            ],
+            [
+                "transform",
+                "FunctionTransformer(feature_names_out='one-to-one', func=<ufunc 'square'>)"
+            ],
+            [
+                "scaler",
+                "StandardScaler()"
+            ],
+            [
+                "model",
+                "Ridge(alpha=9.405585843529142, max_iter=2000, random_state=42)"
+            ]
+        ],
+        "transform_input": null,
+        "verbose": false,
+        "imputer": "SimpleImputer(strategy='median')",
+        "transform": "FunctionTransformer(feature_names_out='one-to-one', func=<ufunc 'square'>)",
+        "scaler": "StandardScaler()",
+        "model": "Ridge(alpha=9.405585843529142, max_iter=2000, random_state=42)",
+        "imputer__add_indicator": false,
+        "imputer__copy": true,
+        "imputer__fill_value": null,
+        "imputer__keep_empty_features": false,
+        "imputer__missing_values": NaN,
+        "imputer__strategy": "median",
+        "transform__accept_sparse": false,
+        "transform__check_inverse": true,
+        "transform__feature_names_out": "one-to-one",
+        "transform__func": "<ufunc 'square'>",
+        "transform__inv_kw_args": null,
+        "transform__inverse_func": null,
+        "transform__kw_args": null,
+        "transform__validate": false,
+        "scaler__copy": true,
+        "scaler__with_mean": true,
+        "scaler__with_std": true,
+        "model__alpha": 9.405585843529142,
+        "model__copy_X": true,
+        "model__fit_intercept": true,
+        "model__max_iter": 2000,
+        "model__positive": false,
+        "model__random_state": 42,
+        "model__solver": "auto",
+        "model__tol": 0.0001
+    },
+    "n_features_original": 90,
+    "n_features_selected": 46,
+    "feature_reduction_percentage": 0.48888888888888893,
+    "performance_loss_percentage": -33.606676146268015,
+    "execution_time_seconds": 102.397620677948,
+    "cv_config": {
+        "n_splits": 5,
+        "random_state": 42
+    },
+    "feature_importance": {
+        "duration_p": 0.12533671777406588,
+        "FWI_12h_av": 0.009195490077715718,
+        "rh_2m_av": 0.09504391138934952,
+        "wv_850_av": 0.06774881410404276,
+        "wv100_k_av": 0.18774843840947458,
+        "wdi_950_av": 0.0518317968167475,
+        "Cape_av": 0.0447481682239145,
+        "BLH_m_av": 0.011994069806421084,
+        "vwv_500_av": 0.015504782088485155,
+        "gT_8_7_av": 0.06952203321802501,
+        "wv_950_av": 0.11210419386905313,
+        "sW_100_av": 0.06365201090144156,
+        "landform": 0.031764491548585225,
+        "Recirc": 0.07319575108324232,
+        "wSv_9_av": 0.026941269185522757,
+        "wv10_kh_av": 0.05632905065606401,
+        "vwv_850_av": 0.03039763760850348,
+        "aspect_av": 0.03456286222781967,
+        "8_ny_fir_p": 0.04766607313798837,
+        "gT_7_5_av": 0.041129333114787864,
+        "f_load_av": 0.040757893028999785,
+        "wdi_500_av": 0.07842103644077607,
+        "wdi_300_av": 0.04394453707011402,
+        "CircVar": 0.039461141190263616,
+        "HDW_av": 0.05747305492506395,
+        "gp_850_av": 0.07586425350479345,
+        "1_3y_fir_p": 0.019028777540177105,
+        "LowCC_p_av": 0.02309539753792784,
+        "TotCC_p_av": 0.07692309639159725,
+        "rh_500_av": 0.029922766166024864,
+        "vwv_300_av": 0.02360842084530299,
+        "wdi_850_av": 0.01055445034369785,
+        "wSv_7_av": 0.035973043637982975,
+        "gT_9_8_av": 0.061284727916491595,
+        "t_950_av": 0.013326051971724926,
+        "gp_300_av": 0.20409902711885766,
+        "gp_500_av": 0.12657397095696518,
+        "t_300_av": 0.005086076960158118,
+        "gp_950_av": 0.04599877572599223,
+        "t_850_av": 0.005529223722552676,
+        "sW_28_av": 0.09026591190152944,
+        "sW_7_av": 0.03794077776129493,
+        "LCL_m_av": 0.02709502707154578,
+        "t_700_av": 0.13199701810817024,
+        "gT_5_3_av": 0.033343203868491815,
+        "sW_1m_av": 0.029204092209033743
+    },
+    "iteration_history": [
+        {
+            "iteration": 1,
+            "feature_added": "duration_p",
+            "r2_score": 0.14862035489593986
+        },
+        {
+            "iteration": 2,
+            "feature_added": "FWI_12h_av",
+            "r2_score": 0.2521190545061446
+        },
+        {
+            "iteration": 3,
+            "feature_added": "rh_2m_av",
+            "r2_score": 0.28711710270753965
+        },
+        {
+            "iteration": 4,
+            "feature_added": "wv_850_av",
+            "r2_score": 0.332124288539252
+        },
+        {
+            "iteration": 5,
+            "feature_added": "wv100_k_av",
+            "r2_score": 0.3538619002805112
+        },
+        {
+            "iteration": 6,
+            "feature_added": "wdi_950_av",
+            "r2_score": 0.37185272534265185
+        },
+        {
+            "iteration": 7,
+            "feature_added": "Cape_av",
+            "r2_score": 0.38616069744007914
+        },
+        {
+            "iteration": 8,
+            "feature_added": "BLH_m_av",
+            "r2_score": 0.3945540075444935
+        },
+        {
+            "iteration": 9,
+            "feature_added": "vwv_500_av",
+            "r2_score": 0.4021174392475107
+        },
+        {
+            "iteration": 10,
+            "feature_added": "gT_8_7_av",
+            "r2_score": 0.4066600689020599
+        },
+        {
+            "iteration": 11,
+            "feature_added": "wv_950_av",
+            "r2_score": 0.4110282648160647
+        },
+        {
+            "iteration": 12,
+            "feature_added": "sW_100_av",
+            "r2_score": 0.4168746188143748
+        },
+        {
+            "iteration": 13,
+            "feature_added": "landform",
+            "r2_score": 0.4219077146597794
+        },
+        {
+            "iteration": 14,
+            "feature_added": "Recirc",
+            "r2_score": 0.4256342552878377
+        },
+        {
+            "iteration": 15,
+            "feature_added": "wSv_9_av",
+            "r2_score": 0.4291677225182834
+        },
+        {
+            "iteration": 16,
+            "feature_added": "wv10_kh_av",
+            "r2_score": 0.43228872541043606
+        },
+        {
+            "iteration": 17,
+            "feature_added": "vwv_850_av",
+            "r2_score": 0.4359450867797527
+        },
+        {
+            "iteration": 18,
+            "feature_added": "aspect_av",
+            "r2_score": 0.438286369999369
+        },
+        {
+            "iteration": 19,
+            "feature_added": "8_ny_fir_p",
+            "r2_score": 0.4402900408532481
+        },
+        {
+            "iteration": 20,
+            "feature_added": "gT_7_5_av",
+            "r2_score": 0.4424065656971833
+        },
+        {
+            "iteration": 21,
+            "feature_added": "f_load_av",
+            "r2_score": 0.44410721701684963
+        },
+        {
+            "iteration": 22,
+            "feature_added": "wdi_500_av",
+            "r2_score": 0.4458108040667155
+        },
+        {
+            "iteration": 23,
+            "feature_added": "wdi_300_av",
+            "r2_score": 0.4475332189576743
+        },
+        {
+            "iteration": 24,
+            "feature_added": "CircVar",
+            "r2_score": 0.4490789475762553
+        },
+        {
+            "iteration": 25,
+            "feature_added": "HDW_av",
+            "r2_score": 0.4502440229630723
+        },
+        {
+            "iteration": 26,
+            "feature_added": "gp_850_av",
+            "r2_score": 0.4507949510927121
+        },
+        {
+            "iteration": 27,
+            "feature_added": "1_3y_fir_p",
+            "r2_score": 0.4516697385792171
+        },
+        {
+            "iteration": 28,
+            "feature_added": "LowCC_p_av",
+            "r2_score": 0.452228345007344
+        },
+        {
+            "iteration": 29,
+            "feature_added": "TotCC_p_av",
+            "r2_score": 0.4527791109763427
+        },
+        {
+            "iteration": 30,
+            "feature_added": "rh_500_av",
+            "r2_score": 0.4537692394570259
+        },
+        {
+            "iteration": 31,
+            "feature_added": "vwv_300_av",
+            "r2_score": 0.4546083590929152
+        },
+        {
+            "iteration": 32,
+            "feature_added": "wdi_850_av",
+            "r2_score": 0.4549705986261235
+        },
+        {
+            "iteration": 33,
+            "feature_added": "wSv_7_av",
+            "r2_score": 0.45530592135497183
+        },
+        {
+            "iteration": 34,
+            "feature_added": "gT_9_8_av",
+            "r2_score": 0.4556110919495001
+        },
+        {
+            "iteration": 35,
+            "feature_added": "t_950_av",
+            "r2_score": 0.45600166948290993
+        },
+        {
+            "iteration": 36,
+            "feature_added": "gp_300_av",
+            "r2_score": 0.45724410275970423
+        },
+        {
+            "iteration": 37,
+            "feature_added": "gp_500_av",
+            "r2_score": 0.4584350744934171
+        },
+        {
+            "iteration": 38,
+            "feature_added": "t_300_av",
+            "r2_score": 0.45937630965083703
+        },
+        {
+            "iteration": 39,
+            "feature_added": "gp_950_av",
+            "r2_score": 0.4595219607491224
+        },
+        {
+            "iteration": 40,
+            "feature_added": "t_850_av",
+            "r2_score": 0.4597596061171617
+        },
+        {
+            "iteration": 41,
+            "feature_added": "sW_28_av",
+            "r2_score": 0.46002690234451543
+        },
+        {
+            "iteration": 42,
+            "feature_added": "sW_7_av",
+            "r2_score": 0.4604894698660667
+        },
+        {
+            "iteration": 43,
+            "feature_added": "LCL_m_av",
+            "r2_score": 0.46085643249158864
+        },
+        {
+            "iteration": 44,
+            "feature_added": "t_700_av",
+            "r2_score": 0.4610658485111168
+        },
+        {
+            "iteration": 45,
+            "feature_added": "gT_5_3_av",
+            "r2_score": 0.46127741425548763
+        },
+        {
+            "iteration": 46,
+            "feature_added": "sW_1m_av",
+            "r2_score": 0.4613352798355761
+        },
+        {
+            "iteration": 47,
+            "feature_added": "wSdir_9_av",
+            "r2_score": 0.4612420255956682
+        },
+        {
+            "iteration": 48,
+            "feature_added": "t_500_av",
+            "r2_score": 0.4611234123446393
+        },
+        {
+            "iteration": 49,
+            "feature_added": "Haines_av",
+            "r2_score": 0.4609764416928287
+        }
+    ]
+}
