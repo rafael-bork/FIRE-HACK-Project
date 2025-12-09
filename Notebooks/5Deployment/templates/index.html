@@ -1213,6 +1213,40 @@
             width: 14px;
             height: 14px;
         }
+
+        /* Export Button Styles */
+        .btn-export {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 10px 14px;
+            background: rgba(255, 255, 255, 0.6);
+            border: 1.5px solid rgba(0, 0, 0, 0.08);
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-export:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.9);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .btn-export:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-export svg {
+            width: 16px;
+            height: 16px;
+        }
     </style>
 </head>
 
@@ -1394,7 +1428,23 @@
                 </button>
             </div>
         </div>
+
+        <!-- Export Panel -->
+        <div class="glass p-3 mt-3">
+            <div class="label mb-2" style="font-size: 10px;">Export Data</div>
+            <button class="btn-export" id="export-csv-btn" onclick="exportToCSV()" disabled>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                <span>Export CSV</span>
+            </button>
+            <p class="hint mt-2">Export all predictions and inputs for each cell.</p>
+        </div>
     </div>
+
+    <!-- Exportar para csv-->
 
     <div class="info-tooltip-wrapper" style="margin-left: 310px; margin-top: 20px;"> 
                             <span class="info-icon" style="font-size: 18px; color: rgba(255, 0, 0, 0.483); width: 28px; height: 28px;">?</span>
@@ -1632,6 +1682,86 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
+        // --- EXPORT TO CSV FUNCTION ---
+        function exportToCSV() {
+            if (Object.keys(predictionsByDuration).length === 0) {
+                showStatusError('No Data', 'Run a prediction first to export data.');
+                return;
+            }
+
+            // Build CSV header
+            const headers = [
+                'duration_hours',
+                'latitude',
+                'longitude',
+                'ros_mh',
+                'ros_increment_mh',
+                'displacement_m',
+                'displacement_increment_m',
+                'error_estimate',
+                'fuel_load',
+                'pct_3_8',
+                'pct_8p',
+                'wv100_kh',
+                'FWI_12h'
+            ];
+
+            const rows = [headers.join(',')];
+
+            // Iterate through all durations and predictions
+            for (const dur of availableDurations) {
+                const predictions = predictionsByDuration[dur] || [];
+                for (const p of predictions) {
+                    const row = [
+                        dur,
+                        p.lat.toFixed(4),
+                        p.lon.toFixed(4),
+                        p.ros.toFixed(4),
+                        (p.ros_increment || 0).toFixed(4),
+                        p.displacement.toFixed(4),
+                        (p.increment || 0).toFixed(4),
+                        p.error_estimate.toFixed(4),
+                        p.input_vars?.fuel_load?.toFixed(4) ?? '',
+                        p.input_vars?.pct_3_8?.toFixed(4) ?? '',
+                        p.input_vars?.pct_8p?.toFixed(4) ?? '',
+                        p.input_vars?.wv100_kh?.toFixed(4) ?? '',
+                        p.input_vars?.FWI_12h?.toFixed(4) ?? ''
+                    ];
+                    rows.push(row.join(','));
+                }
+            }
+
+            // Create and download CSV
+            const csvContent = rows.join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            
+            // Generate filename with timestamp
+            const datetime = document.getElementById('datetime-input').value || 'prediction';
+            const timestamp = datetime.replace(/[:\s]/g, '-').replace('T', '_');
+            link.setAttribute('download', `fireros_predictions_${timestamp}.csv`);
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            showStatusSuccess('Export Complete', `${rows.length - 1} records exported`);
+        }
+
+        // Function to enable/disable export button based on data availability
+        function updateExportButtonState() {
+            const exportBtn = document.getElementById('export-csv-btn');
+            if (Object.keys(predictionsByDuration).length > 0) {
+                exportBtn.disabled = false;
+            } else {
+                exportBtn.disabled = true;
+            }
+        }
+
         // --- CHART PANE FUNCTIONS ---
         let rosChart = null;
         let incrementChart = null;
@@ -2643,12 +2773,14 @@
                         setupTimeline();
                         drawGrid();
                         updateStats();
+                        updateExportButtonState();
                         showStatusSuccess('Prediction Complete', `${availableDurations.length} time steps processed`);
                     } else {
                         document.getElementById('min-ros-output').innerText = '—';
                         document.getElementById('avg-ros-output').innerText = '—';
                         document.getElementById('max-ros-output').innerText = '—';
                         document.getElementById('timeline-panel').classList.add('hidden');
+                        updateExportButtonState();
                         showStatusError('No Data', 'Check data availability for selected date');
                     }
                 } else {
@@ -2704,6 +2836,7 @@
             document.getElementById('avg-ros-output').innerText = '—';
             document.getElementById('max-ros-output').innerText = '—';
             document.getElementById('timeline-panel').classList.add('hidden');
+            updateExportButtonState();
             showStatusError('Request Failed', message);
         }
 
