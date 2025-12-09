@@ -1,1 +1,0 @@
-{"log_mult": 5, "log_base": 10, "inverse_formula": "y_val_log = np.exp(y_val_pred_log * np.log(log_base) / log_mult) - 1"}
