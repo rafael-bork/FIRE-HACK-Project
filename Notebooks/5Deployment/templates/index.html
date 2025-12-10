@@ -1487,7 +1487,7 @@
                             </div>
                         </div>
                     </div>
-                    <select id="model-selector" class="select-field">
+                    <select id="model-selector" class="select-field" onchange="onModelChange()">
                         <option value="complex" selected>Complex Model</option>
                         <option value="linear">Linear Model</option>
                     </select>
@@ -1558,11 +1558,21 @@
                 <div id="input-var-selector-container" class="hidden">
                     <label class="label">Variable</label>
                     <select id="input-var-selector" class="select-field" onchange="updateInputVarDisplay()">
-                        <option value="fuel_load">Fuel Load (tons/ha)</option>
-                        <option value="pct_3_8">Percentage of area burned between 3 and 8 years ago</option>
-                        <option value="pct_8p">Percentage of area burned more than 8 years ago</option>
-                        <option value="wv100_kh">Wind at 100m (km/h)</option>
-                        <option value="FWI_12h">Fire Weather Index</option>
+                        <optgroup label="Fuel & Fire History">
+                            <option value="fuel_load">Fuel Load (tons/ha)</option>
+                            <option value="pct_3_8">% Burned 3-8 Years Ago</option>
+                            <option value="pct_8p">% Burned 8+ Years Ago</option>
+                        </optgroup>
+                        <optgroup label="Fire Weather">
+                            <option value="FWI_12h">Fire Weather Index</option>
+                            <option value="DC_12h">Drought Code (12h)</option>
+                            <option value="HDW">Hot-Dry-Windy Index</option>
+                        </optgroup>
+                        <optgroup label="Atmospheric">
+                            <option value="wv_850">Wind at 850 hPa (m/s)</option>
+                            <option value="Cape">CAPE (J/kg)</option>
+                            <option value="gT_8_7">Temp Gradient 850-700 hPa</option>
+                        </optgroup>
                     </select>
                 </div>
 
@@ -1711,8 +1721,12 @@
                 'fuel_load',
                 'pct_3_8',
                 'pct_8p',
-                'wv100_kh',
-                'FWI_12h'
+                'FWI_12h',
+                'DC_12h',
+                'Cape',
+                'HDW',
+                'wv_850',
+                'gT_8_7'
             ];
 
             const rows = [headers.join(',')];
@@ -1733,8 +1747,12 @@
                         p.input_vars?.fuel_load?.toFixed(4) ?? '',
                         p.input_vars?.pct_3_8?.toFixed(4) ?? '',
                         p.input_vars?.pct_8p?.toFixed(4) ?? '',
-                        p.input_vars?.wv100_kh?.toFixed(4) ?? '',
-                        p.input_vars?.FWI_12h?.toFixed(4) ?? ''
+                        p.input_vars?.FWI_12h?.toFixed(4) ?? '',
+                        p.input_vars?.DC_12h?.toFixed(4) ?? '',
+                        p.input_vars?.Cape?.toFixed(4) ?? '',
+                        p.input_vars?.HDW?.toFixed(4) ?? '',
+                        p.input_vars?.wv_850?.toFixed(4) ?? '',
+                        p.input_vars?.gT_8_7?.toFixed(4) ?? ''
                     ];
                     rows.push(row.join(','));
                 }
@@ -1760,6 +1778,7 @@
 
             showStatusSuccess('Export Complete', `${rows.length - 1} records exported`);
         }
+
 
         // Function to enable/disable export button based on data availability
         function updateExportButtonState() {
@@ -2086,6 +2105,14 @@
             }
         }
 
+        // --- MODEL CHANGE HANDLER ---
+        function onModelChange() {
+            // Only re-run if we already have predictions loaded
+            if (Object.keys(predictionsByDuration).length > 0) {
+                runGridPrediction();
+            }
+        }
+
         function showStatusSuccess(message, detail = '') {
             showStatus(message, detail, 'success');
             hideStatus(2500);
@@ -2221,10 +2248,14 @@
         // Human-readable names for input variables
         const inputVarLabels = {
             'fuel_load': 'Fuel Load (tons/ha)',
-            'pct_3_8': '% of area burned between 3 and 8 years ago',
-            'pct_8p': '% of area burned more than 8 years ago',
-            'wv100_kh': 'Wind at 100m (km/h)',
-            'FWI_12h': 'Fire Weather Index'
+            'pct_3_8': '% Burned 3-8 Years Ago',
+            'pct_8p': '% Burned 8+ Years Ago',
+            'FWI_12h': 'Fire Weather Index',
+            'DC_12h': 'Drought Code (12h)',
+            'Cape': 'CAPE (J/kg)',
+            'HDW': 'Hot-Dry-Windy Index',
+            'wv_850': 'Wind at 850 hPa (m/s)',
+            'gT_8_7': 'Temp Gradient 850-700 hPa (K)'
         };
 
         // Color stops for ROS (green to red)
@@ -2430,7 +2461,7 @@
             
             // Input variable ranges
             inputVarRanges = {};
-            const varNames = ['fuel_load', 'pct_3_8', 'pct_8p', 'wv100_kh', 'FWI_12h'];
+            const varNames = ['fuel_load', 'pct_3_8', 'pct_8p', 'FWI_12h', 'DC_12h', 'Cape', 'HDW', 'wv_850', 'gT_8_7'];
             
             varNames.forEach(varName => {
                 const values = [];
@@ -2542,10 +2573,16 @@
                                 <div style="font-weight: 600; color: #1a1a1a; margin-bottom: 4px;">Input Variables</div>
                     `;
                     
-                    for (const [key, value] of Object.entries(pred.input_vars)) {
-                        const label = inputVarLabels[key] || key;
-                        const dispVal = value !== null ? value.toFixed(2) : 'N/A';
-                        popupContent += `<div>${label}: ${dispVal}</div>`;
+                    // Define display order
+                    const displayOrder = ['fuel_load', 'pct_3_8', 'pct_8p', 'FWI_12h', 'DC_12h', 'HDW', 'wv_850', 'Cape', 'gT_8_7'];
+                    
+                    for (const key of displayOrder) {
+                        if (pred.input_vars.hasOwnProperty(key)) {
+                            const value = pred.input_vars[key];
+                            const label = inputVarLabels[key] || key;
+                            const dispVal = value !== null && value !== undefined ? value.toFixed(2) : 'N/A';
+                            popupContent += `<div>${label}: ${dispVal}</div>`;
+                        }
                     }
                     
                     popupContent += `</div>`;

@@ -91,7 +91,8 @@ def predict_grid_sse():
             # Check if data exists
             data_exists = False
             cols_to_check = ['fuel_load', 'pct_3_8', 'pct_8p', 
-                             'wv100_kh', 'FWI_12h', 'log_pred', 'linear_pred', 'error_estimate']
+                 'wv100_kh', 'FWI_12h', 'log_pred', 'linear_pred', 
+                 'error_estimate', 'log_pred_linear', 'linear_pred_linear']
             
             if ds_master is not None:
                 valid = True
@@ -193,8 +194,9 @@ def predict_grid_sse():
                 'detail': 'Organizing predictions'
             })
             
-            pred_col = 'linear_pred' if model_type == 'complex' else 'linear_pred'
-            input_var_cols = ['fuel_load', 'pct_3_8', 'pct_8p', 'wv100_kh', 'FWI_12h']
+            pred_col = 'linear_pred' if model_type == 'complex' else 'linear_pred_linear'
+            error_col = 'error_estimate' if model_type == 'complex' else 'error_estimate_linear'
+            input_var_cols = ['fuel_load', 'pct_3_8', 'pct_8p', 'wv100_kh', 'FWI_12h', 'DC_12h', 'Cape', 'HDW', 'wv_850', 'gT_8_7']
             
             predictions_by_duration = {}
             total_cells = 0
@@ -218,7 +220,7 @@ def predict_grid_sse():
                             'lon': float(row['longitude']),
                             'ros': float(pred_value),
                             'displacement': displacement,
-                            'error_estimate': float(row.get('error_estimate', pred_value * 0.1)),  
+                            'error_estimate': float(row.get(error_col, pred_value * 0.1)),  
                             'input_vars': {}
                         }
                         
@@ -349,7 +351,8 @@ def predict_grid():
         
         data_exists = False
         cols_to_check = ['fuel_load', 'pct_3_8', 'pct_8p', 
-                         'wv100_kh', 'FWI_12h', 'log_pred', 'linear_pred']
+                 'wv100_kh', 'FWI_12h', 'log_pred', 'linear_pred', 
+                 'error_estimate', 'log_pred_linear', 'linear_pred_linear']
         
         if ds_master is not None:
             valid = True
@@ -404,8 +407,9 @@ def predict_grid():
         ]
         model_inputs = model_inputs[mask]
         
-        pred_col = 'linear_pred' if model_type == 'complex' else 'linear_pred'
-        input_var_cols = ['fuel_load', 'pct_3_8', 'pct_8p', 'wv100_kh', 'FWI_12h']
+        pred_col = 'linear_pred' if model_type == 'complex' else 'linear_pred_linear'
+        error_col = 'error_estimate' if model_type == 'complex' else 'error_estimate_linear'
+        input_var_cols = ['fuel_load', 'pct_3_8', 'pct_8p', 'wv100_kh', 'FWI_12h', 'DC_12h', 'Cape', 'HDW', 'wv_850', 'gT_8_7']
         
         predictions_by_duration = {}
         total_cells = 0
@@ -429,7 +433,7 @@ def predict_grid():
                         'lon': float(row['longitude']),
                         'ros': float(pred_value),
                         'displacement': displacement,
-                        'error_estimate': float(row.get('error_estimate', pred_value * 0.1)),  
+                        'error_estimate': float(row.get(error_col, pred_value * 0.1)),  
                         'input_vars': {}
                     }
                     
