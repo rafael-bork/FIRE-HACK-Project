@@ -15,9 +15,8 @@ import threading
 import uuid
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for frontend communication
+CORS(app)  
 
-# Store for tracking prediction progress per request
 prediction_progress = {}
 
 
@@ -139,8 +138,8 @@ def predict_grid_sse():
                 
                 yield send_sse_event('progress', {
                     'stage': 'fetching_era5_fwi',
-                    'message': 'Fetching ERA5_FWI...',
-                    'detail': 'Fire Weather Index data'
+                    'message': 'Fetching ERA5 Data...',
+                    'detail': 'This may take up to 1 minute'
                 })
                 
                 # Call the calculation function
