@@ -1320,7 +1320,7 @@
             </button>
 
             <!-- Title -->
-            <h1 class="welcome-title">Welcome</h1>
+            <h1 class="welcome-title">Welcome!</h1>
 
 
                 <div class="welcome-content-inner">
@@ -1447,15 +1447,24 @@
     <!-- Exportar para csv-->
 
     <div class="info-tooltip-wrapper" style="margin-left: 310px; margin-top: 20px;"> 
-                            <span class="info-icon" style="font-size: 18px; color: rgba(255, 0, 0, 0.483); width: 28px; height: 28px;">?</span>
-                            <div class="info-tooltip">
-                                <div class="info-tooltip-title">Variables</div>
-                                <div class="info-tooltip-content">
-                                    <p>The fire progressions and variables used to train this model were obtained from the PT-FireSpread database.</p>
-                                    <p>The metereological variables were obtained from the CDS API.</p>
+                                <span class="info-icon" style="font-size: 18px; color: rgba(255, 0, 0, 0.483); width: 28px; height: 28px;">?</span>
+                                <div class="info-tooltip" style="width: 350px;">
+                                    <div class="info-tooltip-title">Geographical Variables</div>
+                                    <div class="info-tooltip-content">
+                                        <p>Geographic variables were extracted by overlaying fire progression polygons on raster data. Continuous variables (elevation, aspect, fuel load) used spatial averages, while categorical variables (landform, fuel model, land use) used spatial modes. Fire history was computed as percentage of area burned in different time windows.</p>
+                                    </div>
+                                    <div class="info-tooltip-title" style="padding-top: 12px;">Metereological Variables</div>
+                                    <div class="info-tooltip-content">
+                                        <p>Meteorological data from ERA5 and ERA5 Land was consolidated into a 0.1° grid. Hourly spatial averages were computed first, then temporal averages across each progression's duration. Secondary variables (VPD, DFMC, wind shear, stability indices) were derived before aggregation.</p>
+                                    </div>
+                                    <div class="info-tooltip-title" style="padding-top: 12px;">Data Filtering</div>
+                                    <div class="info-tooltip-content">
+                                        <p>Only progressions with known start/end times (Rank 1 and 2) were used. Training used 1,177 of 3,367 available progressions from the PT-FireSprd L2 database.</p>
+                                    </div>
                                 </div>
-                            </div>
-    </div>
+        </div>
+
+
 
     <!-- Floating Sidebar -->
     <aside class="fixed top-4 left-4 z-[1000] w-72">
