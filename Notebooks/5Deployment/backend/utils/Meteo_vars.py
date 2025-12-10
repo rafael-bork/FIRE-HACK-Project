@@ -215,7 +215,7 @@ def calculate_weather_variables(ds_SL, ds_PL, ds_FWI, ds_Land):
     es_sl = saturation_vapor_pressure(T2_sl)
     ea_sl = saturation_vapor_pressure(Td2_sl)
 
-    vpd_sl = (es_sl - ea_sl) * 0.001
+    vpd_sl = (es_sl - ea_sl)
 
     # ==================== HDW (Hot Dry Windy Index) ====================
     print("Computando HDW para ERA5-Land e ERA5-SL...")
