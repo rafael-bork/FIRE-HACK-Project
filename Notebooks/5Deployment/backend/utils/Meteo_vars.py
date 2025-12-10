@@ -197,8 +197,8 @@ def calculate_weather_variables(ds_SL, ds_PL, ds_FWI, ds_Land):
     # ==================== VPD A 2m (ERA5-LAND) ====================
     print("Computando VPD a 2m para ERA5-Land...")
 
-    T2_land  = ds_Land["t_2m_K"] * units.kelvin
-    Td2_land = ds_Land["d_2m_K"] * units.kelvin
+    T2_land  = ds_Land["t_2m_K"] + 273.15 
+    Td2_land = ds_Land["d_2m_K"] + 273.15 
 
     es_land = saturation_vapor_pressure(T2_land)
     ea_land = saturation_vapor_pressure(Td2_land)
@@ -209,8 +209,8 @@ def calculate_weather_variables(ds_SL, ds_PL, ds_FWI, ds_Land):
     print("Computando VPD a 2m para ERA5-SL...")
 
     # ERA5-SL vem em °C → converter para Kelvin
-    T2_sl  = (ds_SL["t_2m_K"] + 273.15) * units.kelvin
-    Td2_sl = (ds_SL["d_2m_K"] + 273.15) * units.kelvin
+    T2_sl  = (ds_SL["t_2m_K"] + 273.15) 
+    Td2_sl = (ds_SL["d_2m_K"] + 273.15) 
 
     es_sl = saturation_vapor_pressure(T2_sl)
     ea_sl = saturation_vapor_pressure(Td2_sl)
