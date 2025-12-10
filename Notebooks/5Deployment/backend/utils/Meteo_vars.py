@@ -273,12 +273,12 @@ def calculate_weather_variables(ds_SL, ds_PL, ds_FWI, ds_Land):
     # ==================== CREATE OUTPUT DATASET ====================
     ds_output = xr.Dataset(
         {
-            'hdw_land': hdw_final,
-            'wspd_850_kmh': wspd_850_kmh,
-            'cape_sl': ds_SL["cape"],                  # Assumindo variável existe
-            'gradT_850_700_C_per_km': gradT_850_700_C_per_km,
-            'DC': ds_FWI["DC_12h"],
-            'FWI': ds_FWI["FWI_12h"]
+            'HDW': hdw_final,
+            'wv_850': wspd_850_kmh,
+            'Cape': ds_SL["cape"],                  # Assumindo variável existe
+            'gT_8_7': gradT_850_700_C_per_km,
+            'DC_12h': ds_FWI["DC_12h"],
+            'FWI_12h': ds_FWI["FWI_12h"]
         },
         coords={
             'valid_time': ds_SL.valid_time,
@@ -287,7 +287,7 @@ def calculate_weather_variables(ds_SL, ds_PL, ds_FWI, ds_Land):
         }
     )
 
-    
+    print(ds_output)
 
     # Remove unidades MetPy
     for var in ds_output.data_vars:
