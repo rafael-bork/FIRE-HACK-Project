@@ -203,8 +203,7 @@ def calculate_weather_variables(ds_SL, ds_PL, ds_FWI, ds_Land):
     es_land = saturation_vapor_pressure(T2_land)
     ea_land = saturation_vapor_pressure(Td2_land)
 
-    vpd_land = (es_land - ea_land) * 0.001
-
+    vpd_land = (es_land - ea_land) 
 
     # ==================== VPD A 2m (ERA5-SL) ====================
     print("Computando VPD a 2m para ERA5-SL...")
