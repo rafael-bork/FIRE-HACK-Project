@@ -19,17 +19,15 @@ def calculate_and_append_master(start_time, duration, mins_since_fire_start, mas
     model_inputs['fstart'] = mins_since_fire_start
 
     # ------------------- Previsões XGBoost -------------------
-    with open(r'../../Data/Models/XGBoost.pkl', 'rb') as f:
+    with open(r'../../Data/Models/model_xgboost.pkl', 'rb') as f:
         model = pickle.load(f)
 
     rename_dict = {
         'duration_hours': 'duration_p',
         'pct_8p': '8_ny_fir_p',
         'pct_3_8': '3_8y_fir_p',
-        'fuel_load': 'f_load_av',
         'fstart': 'f_start',
-        'FWI_12h': 'FWI_12h_av',
-        'wv100_kh': 'wv100_k_av'
+        'FWI_12h': 'FWI_12h_av'
     }
 
     X = model_inputs.drop(columns=['latitude', 'longitude', 's_time']).rename(columns=rename_dict)
@@ -42,9 +40,47 @@ def calculate_and_append_master(start_time, duration, mins_since_fire_start, mas
     predictions = model.predict(X)
 
     model_inputs['log_pred'] = predictions # log scale
-    model_inputs['linear_pred'] = 10**(predictions / 5) - 1 # linear scale
+    model_inputs['linear_pred'] = np.exp(predictions) - 1 # linear scale
 
     model_inputs = model_inputs.sort_values(by=["duration_hours", "latitude", "longitude"])
+
+    # ------------------- Error Estimation -------------------
+    with open(r'../../Data/Models/model_xgboost_error.pkl', 'rb') as f:
+        import sklearn
+        error_model = pickle.load(f)
+
+    # Predict error based on linear ROS
+    # Reshape if needed (polynomial models typically expect 2D input)
+    linear_ros = model_inputs['linear_pred'].values.reshape(-1, 1)
+    model_inputs['error_estimate'] = error_model.predict(linear_ros)
+
+
+    # ------------------- Linear Model Predictions -------------------
+    model_inputs = Create_inputs.Compile_data(duration, mins_since_fire_start, start_time)
+    with open(r'../../Data/Models/model_linear_ffs.pkl', 'rb') as f:
+        linear_model = pickle.load(f)
+
+    rename_dict = {
+        'duration_hours': 'duration_p',
+        'pct_8p': '8_ny_fir_p',
+        'pct_3_8': '3_8y_fir_p',
+        'fstart': 'f_start',
+        'FWI_12h': 'FWI_12h_av'
+    }
+
+    # Prepare features for linear model (adjust rename_dict if needed)
+    X_linear = model_inputs.drop(columns=['latitude', 'longitude', 's_time']).rename(columns=rename_dict)
+
+    # Check feature names - linear models from sklearn have feature_names_in_
+    if hasattr(linear_model, 'feature_names_in_'):
+        missing_cols_linear = set(linear_model.feature_names_in_) - set(X_linear.columns)
+        if missing_cols_linear:
+            raise ValueError(f"Linear model missing columns: {missing_cols_linear}")
+        X_linear = X_linear[linear_model.feature_names_in_]
+
+    linear_predictions = linear_model.predict(X_linear)
+    model_inputs['log_pred_linear'] = linear_predictions
+    model_inputs['linear_pred_linear'] = np.exp(linear_predictions) - 1
 
     # ------------------- Transformar em xarray -------------------
     df = model_inputs.copy()
@@ -56,7 +92,7 @@ def calculate_and_append_master(start_time, duration, mins_since_fire_start, mas
 
     dims = ('s_time', 'latitude', 'longitude', 'duration_hours', 'fstart')
     variables = ['fuel_load', 'pct_3_8', 'pct_8p', 'wv100_kh',
-                  'FWI_12h', 'log_pred', 'linear_pred']
+                  'FWI_12h', 'log_pred', 'linear_pred', 'error_estimate']
 
     ds_new = xr.Dataset()
     for var in variables:
@@ -81,6 +117,7 @@ def calculate_and_append_master(start_time, duration, mins_since_fire_start, mas
 
         for var in variables:
             ds_new[var][t_idx, lat_idx, lon_idx, dur_idx, fstart_idx] = row[var]
+
 
     # ------------------- Atualizar ou criar Master_Table -------------------
     if os.path.exists(master_file):

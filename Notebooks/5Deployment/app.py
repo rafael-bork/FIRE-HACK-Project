@@ -91,7 +91,7 @@ def predict_grid_sse():
             # Check if data exists
             data_exists = False
             cols_to_check = ['fuel_load', 'pct_3_8', 'pct_8p', 
-                             'wv100_kh', 'FWI_12h', 'log_pred', 'linear_pred']
+                             'wv100_kh', 'FWI_12h', 'log_pred', 'linear_pred', 'error_estimate']
             
             if ds_master is not None:
                 valid = True
@@ -218,7 +218,7 @@ def predict_grid_sse():
                             'lon': float(row['longitude']),
                             'ros': float(pred_value),
                             'displacement': displacement,
-                            'error_estimate': float(pred_value * 0.1),
+                            'error_estimate': float(row.get('error_estimate', pred_value * 0.1)),  
                             'input_vars': {}
                         }
                         
@@ -429,7 +429,7 @@ def predict_grid():
                         'lon': float(row['longitude']),
                         'ros': float(pred_value),
                         'displacement': displacement,
-                        'error_estimate': float(pred_value * 0.1),
+                        'error_estimate': float(row.get('error_estimate', pred_value * 0.1)),  
                         'input_vars': {}
                     }
                     
