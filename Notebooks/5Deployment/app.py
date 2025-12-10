@@ -91,7 +91,7 @@ def predict_grid_sse():
             # Check if data exists
             data_exists = False
             cols_to_check = ['fuel_load', 'pct_3_8', 'pct_8p', 
-                 'wv100_kh', 'FWI_12h', 'log_pred', 'linear_pred', 
+                 'FWI_12h', 'log_pred', 'linear_pred', 
                  'error_estimate', 'log_pred_linear', 'linear_pred_linear']
             
             if ds_master is not None:
@@ -351,7 +351,7 @@ def predict_grid():
         
         data_exists = False
         cols_to_check = ['fuel_load', 'pct_3_8', 'pct_8p', 
-                 'wv100_kh', 'FWI_12h', 'log_pred', 'linear_pred', 
+                  'FWI_12h', 'log_pred', 'linear_pred', 
                  'error_estimate', 'log_pred_linear', 'linear_pred_linear']
         
         if ds_master is not None:
