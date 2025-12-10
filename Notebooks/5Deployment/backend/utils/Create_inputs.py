@@ -169,10 +169,8 @@ def Compile_data(duration, mins_since_fire_start, start_time):
     data_cols = [c for c in df_all.columns if c not in ['latitude', 'longitude', 'duration_hours', 's_time']]
     df_all = df_all.dropna(subset=data_cols, how='all')
 
-    df_all = df_all.sort_values(["s_time", "latitude", "longitude", "duration_hours"])[
-        ["s_time", "latitude", "longitude", "duration_hours",
-         "fuel_load", "pct_3_8", "pct_8p",
-         "wv100_kh", "FWI_12h", "fstart"]
-    ]
+    print(df_all)
+
+    df_all = df_all.sort_values(["s_time", "latitude", "longitude", "duration_hours"])
 
     return df_all
