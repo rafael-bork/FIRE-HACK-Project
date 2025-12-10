@@ -3,7 +3,7 @@ import pandas as pd
 import xarray as xr
 from scipy.interpolate import griddata
 from metpy.units import units
-from metpy.calc import relative_humidity_from_dewpoint, wind_direction
+from metpy.calc import saturation_vapor_pressure, vapor_pressure, wind_speed
 from contextlib import nullcontext
 
 def safe_open(path):
