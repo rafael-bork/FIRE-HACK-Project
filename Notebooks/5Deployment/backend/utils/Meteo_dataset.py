@@ -66,6 +66,11 @@ def assemble_meteorological_data(required_times):
         land_file=era5_files.get('Land')
     )
 
+    ds_SL = ds_SL.load()
+    ds_PL = ds_PL.load()
+    ds_FWI = ds_FWI.load()
+    ds_Land = ds_Land.load()
+
     ds_meteovars = Meteo_vars.calculate_weather_variables(ds_SL, ds_PL, ds_FWI, ds_Land)
     ds_meteovars = ds_meteovars.sel(valid_time=required_times)
     if 'pressure_level' in ds_meteovars:
