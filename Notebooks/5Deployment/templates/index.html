@@ -1459,7 +1459,7 @@
                                     </div>
                                     <div class="info-tooltip-title" style="padding-top: 12px;">Data Filtering</div>
                                     <div class="info-tooltip-content">
-                                        <p>Only progressions with known start/end times (Rank 1 and 2) were used. Training used 1,177 of 3,367 available progressions from the PT-FireSprd L2 database.</p>
+                                        <p>Only progressions with known start and end times, longer than 1 hour, biggest of the timeframe and without partial matches of the same fire were used. </p>
                                     </div>
                                 </div>
         </div>
@@ -1481,8 +1481,17 @@
                             <div class="info-tooltip">
                                 <div class="info-tooltip-title">Model Selection</div>
                                 <div class="info-tooltip-content">
-                                    <p><strong>Complex Model:</strong> XGBoost ensemble with full feature set including weather, fuel load, and historical burn data. Higher accuracy for varied conditions.</p>
-                                    <p><strong>Linear Model:</strong> Simplified linear regression using core predictors. Faster computation, better interpretability.</p>
+                                    <p><strong>Complex Model:</strong> XGBoost with full feature set including weather and historical burn data. Higher accuracy for varied conditions.</p>
+                                    <ul>
+                                    <li>R²: 0.604</li>
+                                    <li>MAE: 427.04 m/h</li>
+                                    </ul>
+                                    <p></p>
+                                    <p><strong>Linear Model:</strong> Simplified linear regression using core predictors. Faster computation but with lower accuracy.</p>
+                                    <ul>
+                                    <li>R²: 0.441</li>
+                                    <li>MAE:496.993 m/h</li>
+                                    </ul>
                                 </div>
                             </div>
                         </div>
@@ -1717,7 +1726,6 @@
                 'ros_increment_mh',
                 'displacement_m',
                 'displacement_increment_m',
-                'error_estimate',
                 'fuel_load',
                 'pct_3_8',
                 'pct_8p',
@@ -1743,7 +1751,6 @@
                         (p.ros_increment || 0).toFixed(4),
                         p.displacement.toFixed(4),
                         (p.increment || 0).toFixed(4),
-                        p.error_estimate.toFixed(4),
                         p.input_vars?.fuel_load?.toFixed(4) ?? '',
                         p.input_vars?.pct_3_8?.toFixed(4) ?? '',
                         p.input_vars?.pct_8p?.toFixed(4) ?? '',
@@ -2563,7 +2570,6 @@
                                 <div style="color: #f97316;">ROS Δ: ${(pred.ros_increment || 0).toFixed(1)} m/hr</div>
                                 <div style="color: #3b82f6;">Distance: ${pred.displacement.toFixed(1)} m</div>
                                 <div style="color: #8b5cf6;">Distance Δ: ${(pred.increment || 0).toFixed(1)} m</div>
-                                <div style="color: #888;">Error: ${pred.error_estimate.toFixed(1)}%</div>
                             </div>
                 `;
                 
