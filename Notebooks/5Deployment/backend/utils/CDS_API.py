@@ -68,6 +68,7 @@ def fetch_era5_data(year, month, day, hour):
                 "2m_temperature",
                 "2m_dewpoint_temperature",
                 "convective_available_potential_energy",
+                "volumetric_soil_water_layer_3"
             ],
             "year": year,
             "month": month,

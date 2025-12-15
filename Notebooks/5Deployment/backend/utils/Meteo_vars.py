@@ -47,7 +47,7 @@ def prepare_datasets(sl_file, pl_file, fwi_file, land_file, target_res=0.1):
         print(ds_Land)
 
         # ==================== RENAME VARIABLES ====================
-        ds_SL = ds_SL.rename({"t2m": "t_2m_K", "d2m": "d_2m_K", "u10": "u10_ms", "v10": "v10_ms", "cape": "cape"})
+        ds_SL = ds_SL.rename({"t2m": "t_2m_K", "d2m": "d_2m_K", "u10": "u10_ms", "v10": "v10_ms", "cape": "cape", "swvl3": "sW_100"})
         ds_PL = ds_PL.rename({"t": "t_K", "u": "u_ms", "v": "v_ms", "z": "gp_m2s2"})
         ds_FWI = ds_FWI.rename({"fwinx": "FWI_12h", "drtcode": "DC_12h"})
         ds_Land = ds_Land.rename({"t2m": "t_2m_K", "d2m": "d_2m_K", "u10": "u10_ms", "v10": "v10_ms"})
@@ -277,7 +277,8 @@ def calculate_weather_variables(ds_SL, ds_PL, ds_FWI, ds_Land):
             'Cape': ds_SL["cape"],                  # Assumindo variável existe
             'gT_8_7': gradT_850_700_C_per_km,
             'DC_12h': ds_FWI["DC_12h"],
-            'FWI_12h': ds_FWI["FWI_12h"]
+            'FWI_12h': ds_FWI["FWI_12h"],
+            "sW_100": ds_SL["sW_100"]
         },
         coords={
             'valid_time': ds_SL.valid_time,
