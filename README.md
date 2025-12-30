@@ -125,6 +125,7 @@ Predictions are displayed as interactive, color-coded maps with multiple visuali
 ├── Models/
 │   ├── model_xgboost.pkl         # Trained complex model
 │   ├── model_linear_ffs.pkl      # Trained linear model with forward feature selection
+│   ├── model_example.ipynb       # Notebook with defualt usage of the models
 │   ├── README.md
 │
 ├── App/
