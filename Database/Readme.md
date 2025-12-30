@@ -51,12 +51,12 @@ The following improvements were applied to the original dataset:
 5. Data Structure
 -----------------
 Delivered files:
-- Atribute_Metadata.xlsx  (atribute metadata)
-- fire_progressions.shp   (geometry)
-- fire_progressions.shx   (spatial index)
-- fire_progressions.dbf   (attribute table)
-- fire_progressions.prj   (coordinate reference system)
-- fire_progressions.cpg   (UTF-8 encoding)
+- Attribute_Metadata.xlsx  (attribute metadata)
+- PT-FireSprd_v3.0.shp     (geometry)
+- PT-FireSprd_v3.0.shx     (spatial index)
+- PT-FireSprd_v3.0.dbf     (attribute table)
+- PT-FireSprd_v3.0.prj     (coordinate reference system)
+- PT-FireSprd_v3.0.cpg     (UTF-8 encoding)
 
 6. Coordinate Reference System
 ------------------------------
