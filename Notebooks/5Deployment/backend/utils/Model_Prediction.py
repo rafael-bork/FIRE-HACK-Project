@@ -19,7 +19,7 @@ def calculate_and_append_master(start_time, duration, mins_since_fire_start, mas
     model_inputs['fstart'] = mins_since_fire_start
 
     # ------------------- Previsões XGBoost -------------------
-    with open(r'../../Data/Models/model_xgboost.pkl', 'rb') as f:
+    with open(r'../../Models/model_xgboost.pkl', 'rb') as f:
         model = pickle.load(f)
 
     rename_dict_xgb = {
@@ -45,14 +45,14 @@ def calculate_and_append_master(start_time, duration, mins_since_fire_start, mas
     model_inputs = model_inputs.sort_values(by=["duration_hours", "latitude", "longitude"])
 
     # ------------------- Error Estimation for XGBoost -------------------
-    with open(r'../../Data/Models/model_xgboost_error.pkl', 'rb') as f:
+    with open(r'../../Models/model_xgboost_error.pkl', 'rb') as f:
         error_model_xgb = pickle.load(f)
 
     linear_ros = model_inputs['linear_pred'].values.reshape(-1, 1)
     model_inputs['error_estimate'] = error_model_xgb.predict(linear_ros)
 
     # ------------------- Linear Model Predictions -------------------
-    with open(r'../../Data/Models/model_linear_ffs.pkl', 'rb') as f:
+    with open(r'../../Models/model_linear_ffs.pkl', 'rb') as f:
         linear_model = pickle.load(f)
 
     # Signed log transformation function: sign * ln(|var| + 1)
@@ -115,7 +115,7 @@ def calculate_and_append_master(start_time, duration, mins_since_fire_start, mas
         model_inputs['linear_pred_linear'] = np.exp(linear_predictions) - 1
 
     # ------------------- Error Estimation for Linear model -------------------
-    with open(r'../../Data/Models/model_linear_error.pkl', 'rb') as f:
+    with open(r'../../Models/model_linear_error.pkl', 'rb') as f:
         error_model_linear = pickle.load(f)
 
     # Use linear model's predictions, not XGBoost's
