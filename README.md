@@ -127,6 +127,10 @@ Predictions are displayed as interactive, color-coded maps with multiple visuali
 │   ├── model_linear_ffs.pkl      # Trained linear model with forward feature selection
 │   ├── README.md
 │
+├── App/
+│   ├── app.py/                   # Interface iniciation
+│   ├── README.md
+│
 ├── Notebooks/
 │   ├── 1Extraction.ipynb         # Meteorological data retrieval from API
 │   ├── 2Transformation.ipynb     # Data processing
