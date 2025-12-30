@@ -107,6 +107,17 @@ The backend is built with Flask and orchestrates the complete prediction pipelin
 
 Both models operate in log-transformed ROS space and return predictions converted back to linear scale.
 
+The models are in the following data structure
+```text
+├── Data/
+│   ├── Models/   
+│       ├── model_xgboost.pkl    
+│       ├── model_linear_ffs.pkl        
+│
+├── App/
+│   ├── app.py/                   
+│   ├── README.md
+
 ---
 
 ## Output
